@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>tiktokchallengeme — Vote</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
+    header{background:#111827;color:white;padding:28px 18px;text-align:center}
+    header h1{margin:0 0 8px;font-size:32px} header p{margin:0;color:#cbd5e1}
+    main{max-width:1000px;margin:28px auto;padding:0 16px}
+    .notice{background:white;border-radius:14px;padding:18px;margin-bottom:20px;box-shadow:0 3px 14px #00000012}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+    .card{background:white;border-radius:16px;padding:20px;box-shadow:0 3px 14px #00000012}
+    .avatar{height:130px;border-radius:12px;background:#e5e7eb;display:grid;place-items:center;font-size:42px;font-weight:bold;color:#64748b}
+    .card h3{margin:14px 0 6px}.votes{color:#64748b;font-size:14px}
+    button{border:0;border-radius:10px;padding:11px 15px;background:#16a34a;color:white;font-weight:bold;cursor:pointer}
+    button:hover{background:#15803d}
+    dialog{border:0;border-radius:18px;padding:0;max-width:420px;width:92%;box-shadow:0 20px 60px #0006}
+    .modal{padding:24px}.modal h2{margin-top:0}label{display:block;margin:14px 0 6px;font-weight:bold}
+    input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:9px;font-size:16px}
+    .actions{display:flex;gap:10px;margin-top:20px}.secondary{background:#64748b}
+    #status{margin-top:15px;font-weight:bold}
+  </style>
+</head>
+<body>
+<header>
+  <h1>tiktokchallengeme</h1>
+  <p>Vote for your favourite contestant — KSh 1 per vote</p>
+</header>
+<main>
+  <div class="notice">
+    <strong>How voting works:</strong> Select a contestant, choose the number of votes,
+    enter your M-Pesa number and complete the STK prompt on your phone.
+  </div>
+  <section id="contestants" class="grid"></section>
+</main>
+
+<dialog id="voteDialog">
+  <div class="modal">
+    <h2 id="voteTitle">Vote</h2>
+    <label for="votes">Number of votes</label>
+    <input id="votes" type="number" min="1" max="100" value="1">
+    <label for="phone">M-Pesa phone number</label>
+    <input id="phone" placeholder="2547XXXXXXXX" inputmode="numeric">
+    <div class="actions">
+      <button class="secondary" onclick="voteDialog.close()">Cancel</button>
+      <button onclick="startPayment()">Pay with M-Pesa</button>
+    </div>
+    <div id="status"></div>
+  </div>
+</dialog>
+
+<script>
+let selectedContestant = null;
+
+async function loadContestants() {
+  const response = await fetch("/api/contestants");
+  const contestants = await response.json();
+  document.getElementById("contestants").innerHTML = contestants.map(c => `
+    <article class="card">
+      <div class="avatar">${c.id}</div>
+      <h3>${escapeHtml(c.name)}</h3>
+      <div class="votes">${c.votes} votes</div>
+      <br>
+      <button onclick="openVote(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')">Vote</button>
+    </article>
+  `).join("");
+}
+
+function openVote(id, name) {
+  selectedContestant = id;
+  document.getElementById("voteTitle").textContent = "Vote for " + name;
+  document.getElementById("status").textContent = "";
+  voteDialog.showModal();
+}
+
+async function startPayment() {
+  const votes = Number(document.getElementById("votes").value);
+  const phone = document.getElementById("phone").value.replace(/\s+/g, "");
+  const status = document.getElementById("status");
+  status.textContent = "Starting M-Pesa payment...";
+
+  const response = await fetch("/api/stkpush", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({contestantId:selectedContestant, phone, votes})
+  });
+  const data = await response.json();
+  status.textContent = data.message || data.error;
+  if (data.success) setTimeout(() => voteDialog.close(), 5000);
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[char]));
+}
+
+loadContestants();
+</script>
+</body>
+</html>
