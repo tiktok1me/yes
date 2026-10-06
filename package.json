@@ -1,0 +1,17 @@
+{
+  "name": "tiktokchallengeme-voting",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Paid voting platform for tiktokchallengeme",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "lowdb": "^7.0.1"
+  }
+}
