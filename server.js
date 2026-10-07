@@ -8,6 +8,7 @@ const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MPESA_BASE_URL = process.env.MPESA_ENV === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke";
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -48,7 +49,7 @@ async function getAccessToken() {
 
   const auth = Buffer.from(`${key}:${secret}`).toString("base64");
   const url = process.env.MPESA_AUTH_URL ||
-    "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
+    `${MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`;
 
   const response = await axios.get(url, {
     headers: { Authorization: `Basic ${auth}` }
@@ -107,7 +108,7 @@ app.post("/api/stkpush", async (req, res) => {
     };
 
     const response = await axios.post(
-      "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+      `${MPESA_BASE_URL}/mpesa/stkpush/v1/processrequest`,
       payload,
       { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
     );
@@ -133,6 +134,18 @@ app.post("/api/stkpush", async (req, res) => {
     console.error(error.response?.data || error.message);
     res.status(500).json({ error: "Unable to start M-Pesa payment." });
   }
+});
+
+app.get("/api/payment/:checkoutRequestId", async (req, res) => {
+  await loadDb();
+  const tx = db.data.transactions.find(t => t.checkoutRequestId === req.params.checkoutRequestId);
+  if (!tx) return res.status(404).json({ error: "Payment not found." });
+  res.json({
+    status: tx.status,
+    votes: tx.votes,
+    resultDesc: tx.resultDesc || null,
+    receipt: tx.mpesaReceiptNumber || null
+  });
 });
 
 app.post("/api/mpesa/callback", async (req, res) => {
