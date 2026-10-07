@@ -88,7 +88,29 @@ async function startPayment() {
   });
   const data = await response.json();
   status.textContent = data.message || data.error;
-  if (data.success) setTimeout(() => voteDialog.close(), 5000);
+  if (data.success) {
+    const checkoutId = data.checkoutRequestId;
+    let tries = 0;
+    const timer = setInterval(async () => {
+      tries++;
+      const r = await fetch("/api/payment/" + encodeURIComponent(checkoutId));
+      const p = await r.json();
+      if (p.status === "PAID") {
+        clearInterval(timer);
+        status.textContent = "Payment successful! " + p.votes + " vote(s) added.";
+        await loadContestants();
+        setTimeout(() => voteDialog.close(), 2500);
+      } else if (p.status === "FAILED") {
+        clearInterval(timer);
+        status.textContent = "Payment was not completed. No votes were added.";
+      } else if (tries >= 24) {
+        clearInterval(timer);
+        status.textContent = "Payment is still pending. Check your M-Pesa message; the result will be recorded when Safaricom sends the callback.";
+      } else {
+        status.textContent = "Waiting for M-Pesa confirmation...";
+      }
+    }, 2500);
+  }
 }
 
 function escapeHtml(value) {
