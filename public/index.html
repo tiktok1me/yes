@@ -59,7 +59,13 @@ async function loadContestants() {
   const contestants = await response.json();
   document.getElementById("contestants").innerHTML = contestants.map(c => `
     <article class="card">
-     <div class="avatar">
+    
+<div class="avatar">
+  ${c.id === 1
+    ? '<img src="/images/Gemini_Generated_Image_gshektgshektgshe.jfif" alt="Mr Kimmy" style="width:100%;height:130px;object-fit:cover;border-radius:12px;">'
+    : c.id}
+</div>
+
   <img src="/images/Gemini_Generated_Image_gshektgshektgshe.jfif"
      alt="Mr Kimmy"
      style="width:100%;height:130px;object-fit:cover;border-radius:12px;">
