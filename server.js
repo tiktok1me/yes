@@ -17,8 +17,8 @@ app.use(express.static(path.join(__dirname, "public")));
 const adapter = new JSONFile("db.json");
 const db = new Low(adapter, {
   contestants: [
-    { id: 1, name: "Contestant 1", votes: 0 },
-    { id: 2, name: "Contestant 2", votes: 0 },
+    { id: 1, name: "MY KIMMY 1", votes: 0 },
+    { id: 2, name: "AFRO SINEMA 2", votes: 0 },
     { id: 3, name: "Contestant 3", votes: 0 },
     { id: 4, name: "Contestant 4", votes: 0 },
     { id: 5, name: "Contestant 5", votes: 0 },
