@@ -60,9 +60,9 @@ async function loadContestants() {
   document.getElementById("contestants").innerHTML = contestants.map(c => `
     <article class="card">
     
-<div class="avatar">
+ <div class="avatar">
   ${c.id === 1
-    ? '<img src="https://marionettestudio.com/wp-content/uploads/2016/11/22-despic-me-2-animation-movie.jpg" alt="Mr Kimmy" style="width:100%;height:130px;object-fit:cover;border-radius:12px;">'
+    ? '<img src="https://marionettestudio.com/wp-content/uploads/2016/11/22-despic-me-2-animation-movie.jpg" alt="Contestant 1" style="width:100%;height:130px;object-fit:cover;border-radius:12px;" onerror="this.style.display=\'none\';this.parentElement.textContent=\'1\';">'
     : c.id}
 </div>
 
