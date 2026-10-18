@@ -39,6 +39,14 @@
     @keyframes logoBounce{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
     @keyframes orbFloat{from{transform:translate(0,0) scale(.9)}to{transform:translate(22px,-15px) scale(1.12)}}
     @keyframes sparkle{0%,100%{opacity:.25;transform:scale(.75) rotate(0)}50%{opacity:1;transform:scale(1.25) rotate(20deg)}}
+    .auth-option{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:46px;margin:10px 0;padding:12px 16px;border:1px solid #d1d5db;border-radius:11px;background:#fff;color:#1f2937;font-size:15px;font-weight:700;box-shadow:0 2px 5px #00000008}
+    .auth-option:hover{background:#f8fafc}
+    .auth-option .auth-icon{width:22px;height:22px;display:inline-grid;place-items:center;flex:0 0 22px;font-size:21px;line-height:1}
+    .google-option{border-color:#cbd5e1}.phone-option{border-color:#bbf7d0;background:#f0fdf4;color:#166534}.phone-option:hover{background:#dcfce7}
+    .email-option{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}.email-option:hover{background:#dbeafe}
+    .email-actions{display:flex;gap:10px;margin-top:16px}.email-actions .auth-option{flex:1;margin:0;padding:12px 8px}
+    .auth-divider{display:flex;align-items:center;gap:12px;margin:19px 0;color:#94a3b8;font-size:12px;font-weight:700;letter-spacing:1px}
+    .auth-divider:before,.auth-divider:after{content:"";height:1px;flex:1;background:#e2e8f0}
     @media(prefers-reduced-motion:reduce){.welcome-hero,.brand-mark,.welcome-hero:before,.welcome-hero:after,.spark{animation:none}}
   </style>
 </head>
@@ -64,9 +72,9 @@
   <h2>Sign in to continue</h2>
   <p>Create an account or sign in before voting.</p>
   <p id="authMessage"></p>
-  <button onclick="signInGoogle()">Continue with Google</button>
+  <button class="auth-option google-option" onclick="signInGoogle()"><span class="auth-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.74 7.18l7.7 5.98c4.5-4.16 7.08-10.3 7.08-17.63z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.82l-7.7-5.98c-2.13 1.43-4.87 2.28-8.2 2.28-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span><span>Continue with Google</span></button>
 
-  <hr style="margin:20px 0;">
+  <div class="auth-divider">OR USE EMAIL</div>
 
   <label for="authEmail">Email address</label>
   <input id="authEmail" type="email" placeholder="Enter your email">
@@ -74,21 +82,21 @@
   <label for="authPassword">Password</label>
   <input id="authPassword" type="password" placeholder="At least 6 characters">
 
-  <div style="display:flex;gap:10px;margin-top:16px;">
-    <button onclick="signUpEmail()">Sign up</button>
-    <button onclick="signInEmail()">Sign in</button>
+  <div class="email-actions">
+    <button class="auth-option email-option" onclick="signUpEmail()"><span class="auth-icon" aria-hidden="true">✉</span><span>Sign up</span></button>
+    <button class="auth-option email-option" onclick="signInEmail()"><span class="auth-icon" aria-hidden="true">📨</span><span>Sign in</span></button>
   </div>
 
-  <hr style="margin:20px 0;">
+  <div class="auth-divider">OR USE PHONE</div>
 
   <label for="authPhone">Phone number</label>
   <input id="authPhone" type="tel" placeholder="+2547XXXXXXXX">
   <div id="recaptcha-container" style="margin:15px 0;"></div>
-  <button onclick="sendPhoneCode()">Send SMS code</button>
+  <button class="auth-option phone-option" onclick="sendPhoneCode()"><span class="auth-icon" aria-hidden="true">📱</span><span>Send SMS code</span></button>
 
   <label for="smsCode">SMS verification code</label>
   <input id="smsCode" inputmode="numeric" placeholder="Enter code">
-  <button onclick="verifyPhoneCode()" style="margin-top:12px;">Verify phone</button>
+  <button class="auth-option phone-option" onclick="verifyPhoneCode()" style="margin-top:12px;"><span class="auth-icon" aria-hidden="true">✓</span><span>Verify phone</span></button>
 
   <p><button class="secondary" onclick="showWelcome()">Back</button></p>
 </section>
