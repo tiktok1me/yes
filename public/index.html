@@ -257,13 +257,33 @@ async function signUpEmail() {
   }
 }
 
+
 async function signInEmail() {
   try {
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
-    await signInWithEmailAndPassword(auth, email, password);
+
+    const credential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    if (!credential.user.emailVerified) {
+      await signOut(auth);
+
+      showAuthMessage(
+        "Your email is not verified yet. Open the verification email we sent you, click its verification link, then sign in again."
+      );
+      return;
+    }
+
+    showAuthMessage("Email verified. Signing you in...");
   } catch (error) {
     showAuthMessage(error.message);
+  }
+}
+
   }
 }
 
