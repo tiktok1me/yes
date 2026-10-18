@@ -24,6 +24,47 @@
   </style>
 </head>
 <body>
+  
+<section id="welcomeScreen" style="max-width:500px;margin:60px auto;padding:30px 20px;text-align:center;background:white;border-radius:18px;box-shadow:0 4px 20px #0001;">
+  <h1>Welcome to tiktokchallengeme</h1>
+  <p>Support your favourite contestant and help them win!</p>
+  <p>Vote securely — KSh 1 per vote.</p>
+  <button onclick="showSignIn()">Next</button>
+</section>
+
+<section id="authScreen" style="display:none;max-width:500px;margin:40px auto;padding:25px 20px;text-align:center;background:white;border-radius:18px;box-shadow:0 4px 20px #0001;">
+  <h2>Sign in to continue</h2>
+  <p>Create an account or sign in before voting.</p>
+  <p id="authMessage"></p>
+  <button onclick="signInGoogle()">Continue with Google</button>
+
+  <hr style="margin:20px 0;">
+
+  <label for="authEmail">Email address</label>
+  <input id="authEmail" type="email" placeholder="Enter your email">
+
+  <label for="authPassword">Password</label>
+  <input id="authPassword" type="password" placeholder="At least 6 characters">
+
+  <div style="display:flex;gap:10px;margin-top:16px;">
+    <button onclick="signUpEmail()">Sign up</button>
+    <button onclick="signInEmail()">Sign in</button>
+  </div>
+
+  <hr style="margin:20px 0;">
+
+  <label for="authPhone">Phone number</label>
+  <input id="authPhone" type="tel" placeholder="+2547XXXXXXXX">
+  <div id="recaptcha-container" style="margin:15px 0;"></div>
+  <button onclick="sendPhoneCode()">Send SMS code</button>
+
+  <label for="smsCode">SMS verification code</label>
+  <input id="smsCode" inputmode="numeric" placeholder="Enter code">
+  <button onclick="verifyPhoneCode()" style="margin-top:12px;">Verify phone</button>
+
+  <p><button class="secondary" onclick="showWelcome()">Back</button></p>
+</section>
+
 <header>
   <h1>tiktokchallengeme</h1>
   <p>Vote for your favourite contestant — KSh 1 per vote</p>
@@ -51,8 +92,137 @@
   </div>
 </dialog>
 
-<script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCxS9naG8EjqeZK_0WSPqz8wb7ch5UjUas",
+  authDomain: "tiktokchallengeme-43775.firebaseapp.com",
+  projectId: "tiktokchallengeme-43775",
+  storageBucket: "tiktokchallengeme-43775.firebasestorage.app",
+  messagingSenderId: "588630444493",
+  appId: "1:588630444493:web:0696dc7db522406de25c84",
+  measurementId: "G-6MEL60H9DW"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+let confirmationResult = null;
+let recaptchaVerifier = null;
 let selectedContestant = null;
+
+function showWelcome() {
+  document.getElementById("welcomeScreen").style.display = "block";
+  document.getElementById("authScreen").style.display = "none";
+}
+
+function showSignIn() {
+  document.getElementById("welcomeScreen").style.display = "none";
+  document.getElementById("authScreen").style.display = "block";
+}
+
+function showVotingPage() {
+  document.getElementById("welcomeScreen").style.display = "none";
+  document.getElementById("authScreen").style.display = "none";
+  document.querySelector("header").style.display = "block";
+  document.querySelector("main").style.display = "block";
+}
+
+function showAuthMessage(message) {
+  document.getElementById("authMessage").textContent = message;
+}
+
+async function signInGoogle() {
+  try {
+    await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    showAuthMessage(error.message);
+  }
+}
+
+async function signUpEmail() {
+  try {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    await createUserWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    showAuthMessage(error.message);
+  }
+}
+
+async function signInEmail() {
+  try {
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    showAuthMessage(error.message);
+  }
+}
+
+async function sendPhoneCode() {
+  try {
+    if (!recaptchaVerifier) {
+      recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {});
+      await recaptchaVerifier.render();
+    }
+
+    const phone = document.getElementById("authPhone").value.trim();
+    confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
+    showAuthMessage("SMS sent. Enter the verification code.");
+  } catch (error) {
+    showAuthMessage(error.message);
+  }
+}
+
+async function verifyPhoneCode() {
+  try {
+    if (!confirmationResult) {
+      showAuthMessage("Please request an SMS code first.");
+      return;
+    }
+    const code = document.getElementById("smsCode").value.trim();
+    await confirmationResult.confirm(code);
+  } catch (error) {
+    showAuthMessage(error.message);
+  }
+}
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    showVotingPage();
+  } else {
+    document.querySelector("header").style.display = "none";
+    document.querySelector("main").style.display = "none";
+    showWelcome();
+  }
+});
+
+window.showWelcome = showWelcome;
+window.showSignIn = showSignIn;
+window.signInGoogle = signInGoogle;
+window.signUpEmail = signUpEmail;
+window.signInEmail = signInEmail;
+window.sendPhoneCode = sendPhoneCode;
+window.verifyPhoneCode = verifyPhoneCode;
+</script>
+
+<script>
+
 
 async function loadContestants() {
   const response = await fetch("/api/contestants");
