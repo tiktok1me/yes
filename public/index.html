@@ -65,6 +65,22 @@
   <p><button class="secondary" onclick="showWelcome()">Back</button></p>
 </section>
 
+<div id="accountBar" style="display:none;background:#fff;padding:12px 18px;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;">
+  <div>
+    <strong id="accountName">My Account</strong>
+    <div id="accountEmail" style="font-size:12px;color:#64748b;"></div>
+  </div>
+  <button type="button" class="secondary" onclick="toggleSettings()">⚙️ Settings</button>
+</div>
+
+<div id="settingsPanel" style="display:none;background:#fff;padding:18px;max-width:500px;margin:12px auto;border-radius:12px;box-shadow:0 3px 14px #00000012;">
+  <h3>Account settings</h3>
+  <p id="settingsAccount"></p>
+  <button type="button" onclick="addAccount()">Add account</button>
+  <button type="button" class="secondary" onclick="logoutAccount()">Sign out</button>
+  <button type="button" class="secondary" onclick="toggleSettings()">Close settings</button>
+</div>
+
 <header>
   <h1>tiktokchallengeme</h1>
   <p>Vote for your favourite contestant — KSh 1 per vote</p>
@@ -135,11 +151,35 @@ function showSignIn() {
   document.getElementById("authScreen").style.display = "block";
 }
 
+
 function showVotingPage() {
   document.getElementById("welcomeScreen").style.display = "none";
   document.getElementById("authScreen").style.display = "none";
+  document.getElementById("accountBar").style.display = "flex";
   document.querySelector("header").style.display = "block";
   document.querySelector("main").style.display = "block";
+}
+
+function toggleSettings() {
+  const panel = document.getElementById("settingsPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
+}
+
+async function addAccount() {
+  await signOut(auth);
+  document.getElementById("settingsPanel").style.display = "none";
+  showSignIn();
+}
+
+async function logoutAccount() {
+  await signOut(auth);
+  document.getElementById("settingsPanel").style.display = "none";
+}
+
+window.toggleSettings = toggleSettings;
+window.addAccount = addAccount;
+window.logoutAccount = logoutAccount;
+
 }
 
 function showAuthMessage(message) {
