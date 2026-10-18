@@ -222,12 +222,29 @@ function showAuthMessage(message) {
   document.getElementById("authMessage").textContent = message;
 }
 
-async function signInGoogle() {
+
+async function signUpEmail() {
   try {
-    await signInWithPopup(auth, googleProvider);
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+
+    const credential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    await sendEmailVerification(credential.user);
+    await signOut(auth);
+
+    showAuthMessage(
+      "Verification email sent! Check your inbox, verify your email, then sign in."
+    );
   } catch (error) {
     showAuthMessage(error.message);
   }
+}
+
 }
 
 async function signUpEmail() {
