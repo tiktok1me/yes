@@ -161,12 +161,33 @@ function showSignIn() {
 }
 
 
+function 
 function showVotingPage() {
   document.getElementById("welcomeScreen").style.display = "none";
   document.getElementById("authScreen").style.display = "none";
-  document.getElementById("accountBar").style.display = "flex";
+  document.getElementById("accountBar").style.display = "block";
+  document.getElementById("accountName").textContent =
+    auth.currentUser?.displayName ||
+    auth.currentUser?.email ||
+    auth.currentUser?.phoneNumber ||
+    "Signed in";
   document.querySelector("header").style.display = "block";
   document.querySelector("main").style.display = "block";
+}
+
+function toggleSettings() {
+  const menu = document.getElementById("settingsMenu");
+  menu.style.display = menu.style.display === "none" ? "block" : "none";
+}
+
+function addAccount() {
+  signOut(auth).then(() => showSignIn());
+}
+
+function logOut() {
+  signOut(auth);
+}
+
 }
 
 function toggleSettings() {
