@@ -81,6 +81,15 @@
   <button type="button" class="secondary" onclick="toggleSettings()">Close settings</button>
 </div>
 
+<div id="accountBar" style="display:none; padding:12px; background:#eef2ff; text-align:right;">
+  <span id="accountName">Signed in</span>
+  <button type="button" onclick="toggleSettings()">⚙️ Settings</button>
+  <div id="settingsMenu" style="display:none; margin-top:10px;">
+    <button type="button" onclick="addAccount()">Add account</button>
+    <button type="button" onclick="logOut()">Sign out</button>
+  </div>
+</div>
+
 <header>
   <h1>tiktokchallengeme</h1>
   <p>Vote for your favourite contestant — KSh 1 per vote</p>
