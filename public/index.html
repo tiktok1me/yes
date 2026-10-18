@@ -117,7 +117,8 @@
   </div>
 </dialog>
 
-
+<script>
+async function loadContestants() {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import {
@@ -132,7 +133,7 @@ import {
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-  
+
 const firebaseConfig = {
   apiKey: "AIzaSyCxS9naG8EjqeZK_0WSPqz8wb7ch5UjUas",
   authDomain: "tiktokchallengeme-43775.firebaseapp.com",
@@ -146,150 +147,103 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
-
 let confirmationResult = null;
 let recaptchaVerifier = null;
-let selectedContestant = null;
 
 function showWelcome() {
   document.getElementById("welcomeScreen").style.display = "block";
   document.getElementById("authScreen").style.display = "none";
+  document.getElementById("accountBar").style.display = "none";
+  document.querySelector("header").style.display = "none";
+  document.querySelector("main").style.display = "none";
 }
 
 function showSignIn() {
   document.getElementById("welcomeScreen").style.display = "none";
   document.getElementById("authScreen").style.display = "block";
+  document.querySelector("header").style.display = "none";
+  document.querySelector("main").style.display = "none";
 }
 
-
-function showVotingPage() {
+function showVotingPage(user) {
   document.getElementById("welcomeScreen").style.display = "none";
   document.getElementById("authScreen").style.display = "none";
-  document.getElementById("accountBar").style.display = "block";
+  document.getElementById("accountBar").style.display = "flex";
   document.getElementById("accountName").textContent =
-    auth.currentUser?.displayName ||
-    auth.currentUser?.email ||
-    auth.currentUser?.phoneNumber ||
-    "Signed in";
+    user.displayName || user.email || user.phoneNumber || "My Account";
   document.querySelector("header").style.display = "block";
   document.querySelector("main").style.display = "block";
 }
 
 function toggleSettings() {
-  const menu = document.getElementById("settingsMenu");
-  menu.style.display = menu.style.display === "none" ? "block" : "none";
-}
-
-function addAccount() {
-  signOut(auth).then(() => showSignIn());
-}
-
-function logOut() {
-  signOut(auth);
-}
-
-}
-
-function toggleSettings() {
   const panel = document.getElementById("settingsPanel");
-  panel.style.display = panel.style.display === "block" ? "none" : "block";
+  panel.style.display =
+    panel.style.display === "block" ? "none" : "block";
 }
 
 async function addAccount() {
   await signOut(auth);
-  document.getElementById("settingsPanel").style.display = "none";
   showSignIn();
 }
 
 async function logoutAccount() {
   await signOut(auth);
-  document.getElementById("settingsPanel").style.display = "none";
-}
-
-window.toggleSettings = toggleSettings;
-window.addAccount = addAccount;
-window.logoutAccount = logoutAccount;
-
 }
 
 function showAuthMessage(message) {
   document.getElementById("authMessage").textContent = message;
 }
 
+async function signInGoogle() {
+  try {
+    await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    showAuthMessage(error.message);
+  }
+}
 
 async function signUpEmail() {
   try {
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
-
-    const credential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-    await sendEmailVerification(credential.user);
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    await sendEmailVerification(result.user);
     await signOut(auth);
-
-    showAuthMessage(
-      "Verification email sent! Check your inbox, verify your email, then sign in."
-    );
+    showSignIn();
+    showAuthMessage("Verification email sent. Verify your email, then sign in.");
   } catch (error) {
     showAuthMessage(error.message);
   }
 }
-
-}
-
-async function signUpEmail() {
-  try {
-    const email = document.getElementById("authEmail").value.trim();
-    const password = document.getElementById("authPassword").value;
-    await createUserWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    showAuthMessage(error.message);
-  }
-}
-
 
 async function signInEmail() {
   try {
     const email = document.getElementById("authEmail").value.trim();
     const password = document.getElementById("authPassword").value;
+    const result = await signInWithEmailAndPassword(auth, email, password);
 
-    const credential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-    if (!credential.user.emailVerified) {
+    if (!result.user.emailVerified) {
       await signOut(auth);
-
-      showAuthMessage(
-        "Your email is not verified yet. Open the verification email we sent you, click its verification link, then sign in again."
-      );
-      return;
+      showSignIn();
+      showAuthMessage("Please verify your email before signing in.");
     }
-
-    showAuthMessage("Email verified. Signing you in...");
   } catch (error) {
     showAuthMessage(error.message);
-  }
-}
-
   }
 }
 
 async function sendPhoneCode() {
   try {
     if (!recaptchaVerifier) {
-      recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {});
+      recaptchaVerifier = new RecaptchaVerifier(
+        auth, "recaptcha-container", {}
+      );
       await recaptchaVerifier.render();
     }
-
     const phone = document.getElementById("authPhone").value.trim();
-    confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
+    confirmationResult = await signInWithPhoneNumber(
+      auth, phone, recaptchaVerifier
+    );
     showAuthMessage("SMS sent. Enter the verification code.");
   } catch (error) {
     showAuthMessage(error.message);
@@ -299,7 +253,7 @@ async function sendPhoneCode() {
 async function verifyPhoneCode() {
   try {
     if (!confirmationResult) {
-      showAuthMessage("Please request an SMS code first.");
+      showAuthMessage("Request an SMS code first.");
       return;
     }
     const code = document.getElementById("smsCode").value.trim();
@@ -311,20 +265,26 @@ async function verifyPhoneCode() {
 
 onAuthStateChanged(auth, user => {
   if (user) {
-    showVotingPage();
+    if (
+      user.providerData.some(p => p.providerId === "password") &&
+      !user.emailVerified
+    ) {
+      signOut(auth);
+      showSignIn();
+      showAuthMessage("Please verify your email before continuing.");
+      return;
+    }
+    showVotingPage(user);
   } else {
-    document.querySelector("header").style.display = "none";
-    document.querySelector("main").style.display = "none";
     showWelcome();
   }
 });
 
 window.showWelcome = showWelcome;
+window.showSignIn = showSignIn;
 window.toggleSettings = toggleSettings;
 window.addAccount = addAccount;
-window.logOut = logOut;
-
-window.showSignIn = showSignIn;
+window.logoutAccount = logoutAccount;
 window.signInGoogle = signInGoogle;
 window.signUpEmail = signUpEmail;
 window.signInEmail = signInEmail;
@@ -334,7 +294,7 @@ window.verifyPhoneCode = verifyPhoneCode;
 
 <script>
 
-
+let selectedContestant = null;
 async function loadContestants() {
   const response = await fetch("/api/contestants");
   const contestants = await response.json();
