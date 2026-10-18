@@ -21,15 +21,43 @@
     input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:9px;font-size:16px}
     .actions{display:flex;gap:10px;margin-top:20px}.secondary{background:#64748b}
     #status{margin-top:15px;font-weight:bold}
+    .welcome-hero{position:relative;overflow:hidden;isolation:isolate;background:radial-gradient(circle at 50% 0%,#34345f 0,#151526 48%,#09090f 100%);color:#fff;border:1px solid #393955;animation:heroIn .8s ease-out both}
+    .welcome-hero:before,.welcome-hero:after{content:"";position:absolute;z-index:-1;width:190px;height:190px;border-radius:50%;filter:blur(2px);opacity:.35;animation:orbFloat 5s ease-in-out infinite alternate}
+    .welcome-hero:before{background:#ff3158;top:-75px;left:-65px}.welcome-hero:after{background:#28e7ef;right:-65px;bottom:-90px;animation-delay:1s}
+    .brand-mark{position:relative;display:grid;place-items:center;width:104px;height:104px;margin:0 auto 18px;border-radius:28px;background:#08080d;box-shadow:-5px 0 #25f4ee,5px 0 #fe2c55,0 0 38px #fe2c5544;animation:logoBounce 2.2s ease-in-out infinite}
+    .brand-note{font-size:70px;font-weight:900;line-height:1;color:#fff;text-shadow:-4px 0 #25f4ee,4px 0 #fe2c55;transform:rotate(-7deg)}
+    .welcome-kicker{display:inline-block;padding:7px 12px;border:1px solid #ffffff38;border-radius:99px;background:#ffffff0d;color:#f9d77e;font-size:12px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase}
+    .welcome-title{margin:18px 0 10px;font-size:clamp(29px,7vw,42px);line-height:1.08;letter-spacing:-1px}
+    .welcome-title span{background:linear-gradient(90deg,#25f4ee,#fff,#fe2c55);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .welcome-copy{max-width:350px;margin:0 auto 20px;color:#d7d7e8;line-height:1.6}
+    .prize-line{margin:18px 0;padding:13px;border:1px solid #ffffff24;border-radius:13px;background:#ffffff0b;color:#ffe8a3;font-weight:700}
+    .spark{position:absolute;pointer-events:none;font-size:22px;animation:sparkle 2.5s ease-in-out infinite}
+    .spark-one{top:22%;left:9%;color:#25f4ee}.spark-two{top:18%;right:10%;color:#fe2c55;animation-delay:.7s}.spark-three{bottom:22%;left:13%;color:#ffd166;animation-delay:1.2s}.spark-four{bottom:18%;right:12%;color:#25f4ee;animation-delay:.4s}
+    .welcome-next{width:100%;margin-top:5px;padding:14px 18px;border-radius:12px;background:linear-gradient(100deg,#fe2c55,#a927e8);box-shadow:0 8px 24px #fe2c5540;font-size:16px}
+    .welcome-next:hover{background:linear-gradient(100deg,#e51e48,#8b20ca)}
+    @keyframes heroIn{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes logoBounce{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+    @keyframes orbFloat{from{transform:translate(0,0) scale(.9)}to{transform:translate(22px,-15px) scale(1.12)}}
+    @keyframes sparkle{0%,100%{opacity:.25;transform:scale(.75) rotate(0)}50%{opacity:1;transform:scale(1.25) rotate(20deg)}}
+    @media(prefers-reduced-motion:reduce){.welcome-hero,.brand-mark,.welcome-hero:before,.welcome-hero:after,.spark{animation:none}}
   </style>
 </head>
 <body>
   
-<section id="welcomeScreen" style="max-width:500px;margin:60px auto;padding:30px 20px;text-align:center;background:white;border-radius:18px;box-shadow:0 4px 20px #0001;">
-  <h1>Welcome to tiktokchallengeme</h1>
-  <p>Support your favourite contestant and help them win!</p>
-  <p>Vote securely — KSh 1 per vote.</p>
-  <button onclick="showSignIn()">Next</button>
+<section id="welcomeScreen" class="welcome-hero" style="max-width:500px;margin:35px auto;padding:34px 22px;text-align:center;border-radius:24px;box-shadow:0 18px 55px #0004;">
+  <span class="spark spark-one" aria-hidden="true">✦</span>
+  <span class="spark spark-two" aria-hidden="true">✧</span>
+  <span class="spark spark-three" aria-hidden="true">★</span>
+  <span class="spark spark-four" aria-hidden="true">✦</span>
+  <div class="brand-mark" aria-label="Animated music note">
+    <span class="brand-note" aria-hidden="true">♪</span>
+  </div>
+  <span class="welcome-kicker">The challenge starts here</span>
+  <h1 class="welcome-title">Welcome to <span>tiktokchallengeme</span></h1>
+  <p class="welcome-copy">Cheer for your favourite contestant. Every vote brings them one step closer to the spotlight!</p>
+  <div class="prize-line">✨ Big dreams. Big talent. A chance to shine. ✨</div>
+  <p style="margin:0 0 20px;color:#bfc1d8;font-size:13px;">Join the challenge and be part of the excitement.</p>
+  <button class="welcome-next" onclick="showSignIn()">Let's Get Started&nbsp; →</button>
 </section>
 
 <section id="authScreen" style="display:none;max-width:500px;margin:40px auto;padding:25px 20px;text-align:center;background:white;border-radius:18px;box-shadow:0 4px 20px #0001;">
