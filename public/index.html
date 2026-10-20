@@ -72,31 +72,37 @@
 <section id="authScreen" style="display:none;max-width:500px;margin:40px auto;padding:25px 20px;text-align:center;background:white;border-radius:18px;box-shadow:0 4px 20px #0001;">
   <p id="authMessage" role="status" aria-live="polite" style="margin:12px 0;color:#b91c1c;overflow-wrap:anywhere;"></p>
   <div id="authChoicePanel">
-    <h2>Choose how to continue</h2><p>Select one sign-in method to get started.</p>
-    <button class="auth-option google-option" onclick="chooseAuthMethod('google')"><span class="auth-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.74 7.18l7.7 5.98c4.5-4.16 7.08-10.3 7.08-17.63z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.82l-7.7-5.98c-2.13 1.43-4.87 2.28-8.2 2.28-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span><span>Continue with Google</span></button>
-    <button class="auth-option phone-option" onclick="chooseAuthMethod('phone')"><span class="auth-icon" aria-hidden="true">📱</span><span>Continue with Phone</span></button>
-    <button class="auth-option email-option" onclick="chooseAuthMethod('email')"><span class="auth-icon" aria-hidden="true">✉</span><span>Continue with Email</span></button>
+    <h2 id="authModeTitle">Register your account</h2>
+    <p id="authModeDescription">Register first, then log in after verification.</p>
+    <button class="auth-option" onclick="setAuthMode('register')">📝 Register</button>
+    <button class="auth-option" onclick="setAuthMode('login')">🔐 Log in</button>
+    <div class="auth-divider">CHOOSE A METHOD</div>
+    <button class="auth-option google-option" onclick="chooseAuthMethod('google')"><span class="auth-icon">G</span><span id="googleChoiceLabel">Register with Google</span></button>
+    <button class="auth-option phone-option" onclick="chooseAuthMethod('phone')"><span class="auth-icon">📱</span><span id="phoneChoiceLabel">Register with Phone</span></button>
+    <button class="auth-option email-option" onclick="chooseAuthMethod('email')"><span class="auth-icon">✉</span><span id="emailChoiceLabel">Register with Email</span></button>
     <p><button class="secondary" onclick="showWelcome()">Back to welcome</button></p>
   </div>
   <div id="googleAuthPanel" class="method-panel" style="display:none;">
-    <h2>Continue with Google</h2><p>Use your Google account to sign in.</p>
-    <button class="auth-option google-option" onclick="signInGoogle()"><span class="auth-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.74 7.18l7.7 5.98c4.5-4.16 7.08-10.3 7.08-17.63z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.82l-7.7-5.98c-2.13 1.43-4.87 2.28-8.2 2.28-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span><span>Sign in with Google</span></button>
+    <h2 id="googlePanelTitle">Register with Google</h2><p>Use your Google account to continue.</p>
+    <button class="auth-option google-option" onclick="continueWithGoogle()"><span class="auth-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.74 7.18l7.7 5.98c4.5-4.16 7.08-10.3 7.08-17.63z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.82l-7.7-5.98c-2.13 1.43-4.87 2.28-8.2 2.28-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span><span>Sign in with Google</span></button>
     <p><button class="secondary" onclick="showAuthChoices()">← Back to methods</button></p>
   </div>
   <div id="emailAuthPanel" class="method-panel" style="display:none;text-align:left;">
-    <h2 style="text-align:center;">Continue with Email</h2><p style="text-align:center;">Enter your email and choose sign up or sign in.</p>
+    <h2 id="emailPanelTitle" style="text-align:center;">Register with Email</h2><p id="emailPanelDescription" style="text-align:center;">Enter your name, email and password to register.</p>
+    <label for="authFullName">Full name</label><input id="authFullName" type="text" autocomplete="name" placeholder="Your full name">
     <label for="authEmail">Email address</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com">
     <label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters">
-    <div class="email-actions"><button class="auth-option email-option" onclick="signUpEmail()"><span class="auth-icon" aria-hidden="true">✉</span><span>Sign up</span></button><button class="auth-option email-option" onclick="signInEmail()"><span class="auth-icon" aria-hidden="true">📨</span><span>Sign in</span></button></div>
+    <div class="email-actions"><button id="emailSubmitButton" class="auth-option email-option" onclick="submitEmailAuth()">Register</button></div>
     <p style="text-align:center;"><button class="secondary" onclick="showAuthChoices()">← Back to methods</button></p>
   </div>
   <div id="phoneAuthPanel" class="method-panel" style="display:none;text-align:left;">
-    <h2 style="text-align:center;">Continue with Phone</h2><p style="text-align:center;">Enter your phone number to receive an SMS code.</p>
+    <h2 id="phonePanelTitle" style="text-align:center;">Register with Phone</h2><p id="phonePanelDescription" style="text-align:center;">Enter your name and phone number to receive an SMS verification code.</p>
+    <label id="phoneNameLabel" for="authPhoneName">Full name</label><input id="authPhoneName" type="text" autocomplete="name" placeholder="Your full name">
     <label for="authPhone">Phone number</label><input id="authPhone" type="tel" autocomplete="tel" placeholder="+2547XXXXXXXX">
     <div id="recaptcha-container" style="margin:15px 0;"></div>
-    <button class="auth-option phone-option" onclick="sendPhoneCode()"><span class="auth-icon" aria-hidden="true">📱</span><span>Send SMS code</span></button>
+    <button class="auth-option phone-option" onclick="sendPhoneCode()"><span class="auth-icon" aria-hidden="true">📱</span><span>Send verification code</span></button>
     <label for="smsCode">SMS verification code</label><input id="smsCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter code">
-    <button class="auth-option phone-option" onclick="verifyPhoneCode()" style="margin-top:12px;"><span class="auth-icon" aria-hidden="true">✓</span><span>Verify phone</span></button>
+    <button class="auth-option phone-option" onclick="verifyPhoneCode()" style="margin-top:12px;"><span class="auth-icon" aria-hidden="true">✓</span><span id="verifyPhoneLabel">Verify and register</span></button>
     <p style="text-align:center;"><button class="secondary" onclick="showAuthChoices()">← Back to methods</button></p>
   </div>
 </section>
@@ -158,7 +164,9 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   onAuthStateChanged,
-  signOut
+  signOut,
+  updateProfile,
+  getAdditionalUserInfo
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -190,9 +198,32 @@ function showWelcome() {
 function showSignIn() {
   document.getElementById("welcomeScreen").style.display = "none";
   document.getElementById("authScreen").style.display = "block";
-  showAuthChoices();
+  setAuthMode("register");
   document.querySelector("header").style.display = "none";
   document.querySelector("main").style.display = "none";
+}
+
+let authMode = "register";
+
+function setAuthMode(mode) {
+  authMode = mode;
+  document.getElementById("authModeTitle").textContent = mode === "register" ? "Register your account" : "Log in to your account";
+  document.getElementById("authModeDescription").textContent = mode === "register" ? "Create your account first and verify it." : "Use the email, phone, or Google account you already registered.";
+  document.getElementById("googleChoiceLabel").textContent = (mode === "register" ? "Register" : "Log in") + " with Google";
+  document.getElementById("phoneChoiceLabel").textContent = (mode === "register" ? "Register" : "Log in") + " with Phone";
+  document.getElementById("emailChoiceLabel").textContent = (mode === "register" ? "Register" : "Log in") + " with Email";
+  document.getElementById("googlePanelTitle").textContent = (mode === "register" ? "Register" : "Log in") + " with Google";
+  document.getElementById("emailPanelTitle").textContent = (mode === "register" ? "Register" : "Log in") + " with Email";
+  document.getElementById("emailPanelDescription").textContent = mode === "register" ? "Enter your full name, email and password." : "Enter your registered email and password.";
+  document.getElementById("authFullName").style.display = mode === "register" ? "block" : "none";
+  document.querySelector('label[for="authFullName"]').style.display = mode === "register" ? "block" : "none";
+  document.getElementById("emailSubmitButton").textContent = mode === "register" ? "Register" : "Log in";
+  document.getElementById("phonePanelTitle").textContent = (mode === "register" ? "Register" : "Log in") + " with Phone";
+  document.getElementById("phonePanelDescription").textContent = mode === "register" ? "Enter your name and phone number to receive an SMS code." : "Enter your registered phone number and SMS code.";
+  document.getElementById("authPhoneName").style.display = mode === "register" ? "block" : "none";
+  document.getElementById("phoneNameLabel").style.display = mode === "register" ? "block" : "none";
+  document.getElementById("verifyPhoneLabel").textContent = mode === "register" ? "Verify and register" : "Verify and log in";
+  showAuthChoices();
 }
 
 function showAuthChoices() {
@@ -216,6 +247,7 @@ function showVotingPage(user) {
   document.getElementById("accountBar").style.display = "flex";
   document.getElementById("accountName").textContent =
     user.displayName || user.email || user.phoneNumber || "My Account";
+  document.getElementById("accountEmail").textContent = user.email || user.phoneNumber || "";
   document.querySelector("header").style.display = "block";
   document.querySelector("main").style.display = "block";
 }
@@ -239,84 +271,94 @@ function showAuthMessage(message) {
   document.getElementById("authMessage").textContent = message;
 }
 
-async function signInGoogle() {
+async function continueWithGoogle() {
   showAuthMessage("Opening Google sign-in…");
   try {
-    await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    const info = getAdditionalUserInfo(result);
+    if (authMode === "login" && info && info.isNewUser) {
+      await signOut(auth);
+      showAuthMessage("This Google account is not registered here yet. Choose Register with Google first.");
+      return;
+    }
     showAuthMessage("");
   } catch (error) {
-    let message = error.message || "Google sign-in could not be completed.";
-    if (error.code === "auth/popup-blocked") {
-      message = "Your browser blocked the Google sign-in window. Allow pop-ups for this website, then try again.";
-    } else if (error.code === "auth/popup-closed-by-user") {
-      message = "Google sign-in was closed before it finished. Select Continue with Google to try again.";
-    } else if (error.code === "auth/unauthorized-domain") {
-      message = "This website domain is not authorized in Firebase. Add the exact Render website hostname in Firebase Authentication → Settings → Authorized domains.";
-    } else if (error.code === "auth/operation-not-allowed") {
-      message = "Google sign-in is not enabled. In Firebase Console, open Authentication → Sign-in method and enable Google.";
-    }
+    let message = error.message || "Google sign-in failed.";
+    if (error.code === "auth/popup-blocked") message = "Allow pop-ups for this website, then try again.";
+    else if (error.code === "auth/popup-closed-by-user") message = "Google sign-in was closed. Try again.";
+    else if (error.code === "auth/unauthorized-domain") message = "Add this exact Render hostname in Firebase Authentication → Settings → Authorized domains.";
+    else if (error.code === "auth/operation-not-allowed") message = "Enable Google in Firebase Authentication → Sign-in method.";
     showAuthMessage(message);
   }
 }
 
-async function signUpEmail() {
+async function submitEmailAuth() {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const name = document.getElementById("authFullName").value.trim();
   try {
-    const email = document.getElementById("authEmail").value.trim();
-    const password = document.getElementById("authPassword").value;
-    const result = await createUserWithEmailAndPassword(auth, email, password);
-    await sendEmailVerification(result.user);
-    await signOut(auth);
-    showSignIn();
-    showAuthMessage("Verification email sent. Verify your email, then sign in.");
-  } catch (error) {
-    showAuthMessage(error.message);
-  }
-}
-
-async function signInEmail() {
-  try {
-    const email = document.getElementById("authEmail").value.trim();
-    const password = document.getElementById("authPassword").value;
+    if (!email || !password) return showAuthMessage("Enter your email and password.");
+    if (authMode === "register") {
+      if (!name) return showAuthMessage("Enter your full name to register.");
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(result.user, {displayName:name});
+      await sendEmailVerification(result.user);
+      await signOut(auth);
+      setAuthMode("login");
+      chooseAuthMethod("email");
+      return showAuthMessage("Registration started. Open the verification link sent to your email, then log in. Firebase sends an email link, not a numeric email code.");
+    }
     const result = await signInWithEmailAndPassword(auth, email, password);
-
+    await result.user.reload();
     if (!result.user.emailVerified) {
       await signOut(auth);
-      showSignIn();
-      showAuthMessage("Please verify your email before signing in.");
+      showAuthMessage("Verify your email using the link we sent before logging in.");
     }
   } catch (error) {
-    showAuthMessage(error.message);
+    let message = error.message || "Email authentication failed.";
+    if (error.code === "auth/user-not-found" || error.code === "auth/invalid-credential") message = "No matching registered account was found, or the password is incorrect. Register first if you are new.";
+    else if (error.code === "auth/email-already-in-use") message = "This email is already registered. Choose Log in.";
+    else if (error.code === "auth/weak-password") message = "Use a password with at least 6 characters.";
+    showAuthMessage(message);
   }
 }
 
 async function sendPhoneCode() {
   try {
+    const phone = document.getElementById("authPhone").value.trim();
+    if (!/^\\+[1-9]\\d{7,14}$/.test(phone)) return showAuthMessage("Enter phone in international format, e.g. +2547XXXXXXXX.");
+    if (authMode === "register" && !document.getElementById("authPhoneName").value.trim()) return showAuthMessage("Enter your full name to register.");
     if (!recaptchaVerifier) {
-      recaptchaVerifier = new RecaptchaVerifier(
-        auth, "recaptcha-container", {}
-      );
+      recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {});
       await recaptchaVerifier.render();
     }
-    const phone = document.getElementById("authPhone").value.trim();
-    confirmationResult = await signInWithPhoneNumber(
-      auth, phone, recaptchaVerifier
-    );
-    showAuthMessage("SMS sent. Enter the verification code.");
+    confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
+    showAuthMessage("SMS verification code sent. Enter it below.");
   } catch (error) {
-    showAuthMessage(error.message);
+    showAuthMessage(error.message || "Could not send SMS code. Check the number and try again.");
+    if (recaptchaVerifier) { try { await recaptchaVerifier.clear(); } catch (_) {} recaptchaVerifier = null; }
   }
 }
 
 async function verifyPhoneCode() {
   try {
-    if (!confirmationResult) {
-      showAuthMessage("Request an SMS code first.");
-      return;
-    }
+    if (!confirmationResult) return showAuthMessage("Request an SMS code first.");
     const code = document.getElementById("smsCode").value.trim();
-    await confirmationResult.confirm(code);
+    if (!code) return showAuthMessage("Enter the SMS verification code.");
+    const result = await confirmationResult.confirm(code);
+    const info = getAdditionalUserInfo(result);
+    if (authMode === "login" && info && info.isNewUser) {
+      await signOut(auth);
+      return showAuthMessage("This phone number is not registered here yet. Choose Register with Phone first.");
+    }
+    if (authMode === "register") {
+      const name = document.getElementById("authPhoneName").value.trim();
+      if (name) await updateProfile(result.user, {displayName:name});
+      showAuthMessage("Phone verified and registration completed.");
+    }
+    confirmationResult = null;
   } catch (error) {
-    showAuthMessage(error.message);
+    showAuthMessage(error.message || "Verification code was not accepted. Request a new code and try again.");
   }
 }
 
@@ -344,9 +386,9 @@ window.chooseAuthMethod = chooseAuthMethod;
 window.toggleSettings = toggleSettings;
 window.addAccount = addAccount;
 window.logoutAccount = logoutAccount;
-window.signInGoogle = signInGoogle;
-window.signUpEmail = signUpEmail;
-window.signInEmail = signInEmail;
+window.setAuthMode = setAuthMode;
+window.continueWithGoogle = continueWithGoogle;
+window.submitEmailAuth = submitEmailAuth;
 window.sendPhoneCode = sendPhoneCode;
 window.verifyPhoneCode = verifyPhoneCode;
 </script>
