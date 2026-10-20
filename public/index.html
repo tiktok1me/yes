@@ -111,6 +111,7 @@
     <button class="auth-option google-option" onclick="chooseAuthMethod('google')"><span class="auth-icon">G</span><span id="googleChoiceLabel">Register with Google</span></button>
     <button class="auth-option phone-option" onclick="chooseAuthMethod('phone')"><span class="auth-icon">📱</span><span id="phoneChoiceLabel">Register with Phone</span></button>
     <button class="auth-option email-option" onclick="chooseAuthMethod('email')"><span class="auth-icon">✉</span><span id="emailChoiceLabel">Register with Email</span></button>
+    <button class="auth-option" onclick="beginTikTokSignIn()" style="background:#111827;color:#fff;border-color:#111827;"><span class="auth-icon">♪</span><span>Continue with TikTok</span></button>
     <p><button class="secondary" onclick="showWelcome()">Back to welcome</button></p>
   </div>
   <div id="googleAuthPanel" class="method-panel" style="display:none;">
@@ -177,6 +178,8 @@
     <div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin:22px 0;">
       <button type="button" class="round-action" style="width:58px;height:58px;font-size:25px;background:#08080d;box-shadow:-3px 0 #25f4ee,3px 0 #fe2c55;" aria-label="TikTok-style icon" title="TikTok">♪</button>
       <button type="button" class="round-action ai-action" style="width:58px;height:58px;font-size:25px;" onclick="goToChatGPT()" aria-label="Open ChatGPT" title="ChatGPT">✳</button>
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:25px;background:#111827;color:#fff;" onclick="openTikTokProfile()" aria-label="Open TikTok profile" title="TikTok profile">♪</button>
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:22px;" onclick="shareToTikTok()" aria-label="Share website">↗</button>
     </div>
     <p id="homeToolsHint" style="color:#d7d7e8;">Your member room is ready.</p>
     <button type="button" class="welcome-next" style="max-width:320px;" onclick="openVotingRoom()">🗳️ Open Voting Room</button>
@@ -190,6 +193,11 @@
     <button type="button" onclick="document.getElementById('profileImageInput').click()">Change profile photo</button>
     <input id="profileImageInput" type="file" accept="image/*" onchange="saveProfilePhoto(event)">
     <button type="button" onclick="addAccount()">Add account</button>
+    <label for="tiktokUsername" style="display:block;width:100%;margin-top:8px;">TikTok username (without @)</label>
+    <input id="tiktokUsername" type="text" autocomplete="off" placeholder="Enter your TikTok username" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+    <button type="button" onclick="saveTikTokUsername()">Save TikTok username</button>
+    <button type="button" onclick="openTikTokProfile()">♪ Open TikTok profile</button>
+    <button type="button" onclick="shareToTikTok()">↗ Share website for TikTok</button>
     <button type="button" onclick="shareWebsite()">🔗 Share website</button>
     <button type="button" onclick="inviteFacebookFriends()">📘 Invite friends on Facebook</button>
     <button type="button" class="secondary" onclick="logoutAccount()">Sign out</button>
@@ -528,6 +536,62 @@ function toggleSettings() {
   const panel = document.getElementById("settingsPanel");
   panel.style.display =
     panel.style.display === "block" ? "none" : "block";
+}
+
+function getTikTokUsername() {
+  const field = document.getElementById("tiktokUsername");
+  return (field?.value || localStorage.getItem("tiktokchallengeme_tiktok_username") || "").trim().replace(/^@+/, "");
+}
+
+function saveTikTokUsername() {
+  const field = document.getElementById("tiktokUsername");
+  const username = getTikTokUsername();
+  if (!username || !/^[A-Za-z0-9._]+$/.test(username)) {
+    alert("Enter a valid TikTok username without @.");
+    field?.focus();
+    return;
+  }
+  localStorage.setItem("tiktokchallengeme_tiktok_username", username);
+  if (field) field.value = username;
+  alert("TikTok username saved in this browser.");
+}
+
+function openTikTokProfile() {
+  const username = getTikTokUsername();
+  if (!username) {
+    toggleSettings();
+    const field = document.getElementById("tiktokUsername");
+    if (field) field.focus();
+    alert("Add your TikTok username in Profile & settings first.");
+    return;
+  }
+  localStorage.setItem("tiktokchallengeme_tiktok_username", username);
+  window.open("https://www.tiktok.com/@" + encodeURIComponent(username), "_blank", "noopener,noreferrer");
+}
+
+async function shareToTikTok() {
+  const shareData = { title: "tiktokchallengeme", text: "Join tiktokchallengeme and vote for your favourite contestant!", url: window.location.origin };
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareData.url);
+      alert("Website link copied. Open TikTok and paste it into your post or bio.");
+      window.open("https://www.tiktok.com/", "_blank", "noopener,noreferrer");
+    } else {
+      window.prompt("Copy your website link, then share it on TikTok:", shareData.url);
+      window.open("https://www.tiktok.com/", "_blank", "noopener,noreferrer");
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") window.prompt("Copy your website link to share on TikTok:", shareData.url);
+  }
+}
+
+function beginTikTokSignIn() {
+  const message = "TikTok sign-in needs a registered TikTok for Developers app (Login Kit), a verified HTTPS redirect URL, and server-side credentials. It is not activated yet, so this button will not sign you in. Your existing Google, email and phone sign-in still work. Setup guide: https://developers.tiktok.com/docs/en/login-kit-web";
+  const status = document.getElementById("authMessage");
+  if (status) status.textContent = message;
+  alert(message);
 }
 
 async function shareWebsite() {
