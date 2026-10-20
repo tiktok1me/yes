@@ -177,13 +177,15 @@
     <h1 class="welcome-title">Welcome to <span>tiktokchallengeme</span></h1>
     <p class="welcome-copy">You're signed in! Explore your member tools, then open the voting room whenever you're ready.</p>
     <div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin:22px 0;">
-      <button type="button" class="round-action" style="width:58px;height:58px;font-size:25px;background:#08080d;color:#fff;box-shadow:-3px 0 #25f4ee,3px 0 #fe2c55;cursor:pointer;" onclick="openTikTokProfile()" aria-label="Open TikTok profile" title="Open TikTok profile">♪</button>
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:25px;background:#08080d;color:#fff;box-shadow:-3px 0 #25f4ee,3px 0 #fe2c55;cursor:pointer;" onclick="connectSocialAccount('tiktok')" aria-label="Connect TikTok account" title="Connect TikTok account">♪</button>
       <button type="button" class="round-action ai-action" style="width:58px;height:58px;font-size:25px;" onclick="goToChatGPT()" aria-label="Open ChatGPT" title="ChatGPT">✳</button>
       <button type="button" class="round-action" style="width:58px;height:58px;font-size:25px;background:#111827;color:#fff;" onclick="openTikTokProfile()" aria-label="Open TikTok profile" title="TikTok profile">♪</button>
       <button type="button" class="round-action" style="width:58px;height:58px;font-size:22px;" onclick="shareToTikTok()" aria-label="Share website on TikTok" title="Share website on TikTok">↗</button>
-      <button type="button" class="round-action" style="width:58px;height:58px;font-size:30px;font-weight:900;background:#1877F2;color:#fff;cursor:pointer;" onclick="openSocialProfile('facebook')" aria-label="Open Facebook profile" title="Facebook">f</button>
-      <button type="button" class="round-action" style="width:58px;height:58px;font-size:29px;font-weight:800;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;cursor:pointer;" onclick="openSocialProfile('instagram')" aria-label="Open Instagram profile" title="Instagram">◎</button>
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:30px;font-weight:900;background:#1877F2;color:#fff;cursor:pointer;" onclick="connectSocialAccount('facebook')" aria-label="Connect Facebook account" title="Connect Facebook account">f</button>
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:29px;font-weight:800;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;cursor:pointer;" onclick="connectSocialAccount('instagram')" aria-label="Connect Instagram account" title="Connect Instagram account">◎</button>
     </div>
+    <p style="color:#d7d7e8;font-size:13px;">Tap Facebook, Instagram or the first TikTok icon to connect an account securely.</p>
+    <div id="socialConnectionResults" style="display:grid;gap:10px;margin:14px 0;text-align:left;"></div>
     <p id="homeToolsHint" style="color:#d7d7e8;">Your member room is ready.</p>
     <button type="button" class="welcome-next" style="max-width:320px;" onclick="openVotingRoom()">🗳️ Open Voting Room</button>
   </section>
@@ -420,6 +422,7 @@ function showVotingPage(user) {
   renderProfilePhoto(user.photoURL || localStorage.getItem("tiktokchallengemeProfilePhoto"));
   document.getElementById("accountEmail").textContent = user.email || user.phoneNumber || "";
   document.getElementById("memberHome").style.display = "block";
+  renderSocialConnections();
   document.getElementById("settingsPanel").style.display = "none";
   document.getElementById("followUsersPanel").style.display = "none";
   document.querySelector("header").style.display = "none";
@@ -556,6 +559,44 @@ function toggleSettings() {
     if (facebookField && !facebookField.value) facebookField.value = localStorage.getItem("tiktokchallengeme_facebook_profile") || "";
     const instagramField = document.getElementById("instagramUsername");
     if (instagramField && !instagramField.value) instagramField.value = localStorage.getItem("tiktokchallengeme_instagram_username") || "";
+  }
+}
+
+
+function connectSocialAccount(provider) {
+  if (!["facebook", "instagram", "tiktok"].includes(provider)) return;
+  window.location.assign("/auth/" + provider);
+}
+function renderSocialConnections() {
+  const host = document.getElementById("socialConnectionResults");
+  if (!host) return;
+  host.replaceChildren();
+  const entries = [["facebook","Facebook","📘"],["instagram","Instagram","📸"],["tiktok","TikTok","♪"]];
+  let found = false;
+  for (const entry of entries) {
+    const key = entry[0], label = entry[1], icon = entry[2];
+    let profile;
+    try { profile = JSON.parse(localStorage.getItem("tiktokchallengeme_social_" + key) || "null"); } catch { profile = null; }
+    if (!profile || !profile.profileUrl) continue;
+    found = true;
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #475569;border-radius:12px;background:#111827;color:#fff;";
+    if (profile.avatarUrl) {
+      const img = document.createElement("img");
+      img.src = profile.avatarUrl; img.alt = ""; img.referrerPolicy = "no-referrer";
+      img.style.cssText = "width:40px;height:40px;border-radius:50%;object-fit:cover;";
+      row.appendChild(img);
+    }
+    const info = document.createElement("div"); info.style.cssText = "min-width:0;flex:1;";
+    const title = document.createElement("div"); title.style.fontWeight = "700";
+    title.textContent = icon + " " + label + ": " + (profile.displayName || profile.username || "Connected account");
+    const link = document.createElement("a"); link.href = profile.profileUrl; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = "View profile / follow on " + label; link.style.cssText = "color:#25f4ee;font-size:13px;";
+    info.append(title, link); row.appendChild(info); host.appendChild(row);
+  }
+  if (!found) {
+    const empty = document.createElement("p"); empty.textContent = "No social accounts connected yet.";
+    empty.style.cssText = "font-size:13px;color:#d7d7e8;"; host.appendChild(empty);
   }
 }
 
@@ -863,6 +904,8 @@ window.submitEmailAuth = submitEmailAuth;
 window.sendPhoneCode = sendPhoneCode;
 window.verifyPhoneCode = verifyPhoneCode;
 // Expose functions used by the page's inline buttons.
+window.connectSocialAccount = connectSocialAccount;
+window.renderSocialConnections = renderSocialConnections;
 window.openTikTokProfile = openTikTokProfile;
 window.saveTikTokUsername = saveTikTokUsername;
 window.shareToTikTok = shareToTikTok;
