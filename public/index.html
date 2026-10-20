@@ -6,6 +6,17 @@
   <title>tiktokchallengeme — Vote</title>
   <style>
     *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
+    /* Dark theme applies only inside the voting room */
+    #votingRoom{min-height:100vh;background:#080a12;color:#f3f4f6;padding-bottom:32px}
+    #votingRoom header{background:linear-gradient(120deg,#08080d,#17172b 60%,#30101c);color:#fff;border-bottom:1px solid #34344a}
+    #votingRoom main{color:#f3f4f6}
+    #votingRoom .notice{background:#151827;color:#f3f4f6;border:1px solid #292e42;box-shadow:0 8px 24px #0005}
+    #votingRoom .card{background:#151827;color:#f3f4f6;border:1px solid #292e42;box-shadow:0 8px 24px #0005}
+    #votingRoom .avatar{background:#252b3d;color:#cbd5e1}
+    #votingRoom .vote-progress-track{background:#30364a}
+    #votingRoom input,#votingRoom select{background:#0e1220;color:#f3f4f6;border:1px solid #424a61;border-radius:8px;padding:8px}
+    #votingRoom label,#votingRoom p,#votingRoom h1,#votingRoom h2,#votingRoom h3{color:inherit}
+    #votingRoom .secondary{background:#4b5568;color:#fff}
     header{background:#111827;color:white;padding:28px 18px;text-align:center}
     header h1{margin:0 0 8px;font-size:32px} header p{margin:0;color:#cbd5e1}
     main{max-width:1000px;margin:28px auto;padding:0 16px}
