@@ -604,8 +604,28 @@ async function submitEmailAuth() {
       showAuthMessage("Verify your email using the link we sent before logging in.");
     }
   } catch (error) {
+    if (error.code === "auth/email-already-in-use" && authMode === "register") {
+      // If this email already has an account, try the same entered credentials
+      // so returning members can continue without registering a second time.
+      try {
+        const existing = await signInWithEmailAndPassword(auth, email, password);
+        await existing.user.reload();
+        if (!existing.user.emailVerified) {
+          await signOut(auth);
+          setAuthMode("login");
+          chooseAuthMethod("email");
+          showAuthMessage("This account already exists. Open the verification link sent to your email, then log in with the same email and password.");
+        }
+        return;
+      } catch (loginError) {
+        setAuthMode("login");
+        chooseAuthMethod("email");
+        showAuthMessage("This email is already registered. Log in using the original email and password. If you forgot the password, use Firebase Authentication password-reset setup.");
+        return;
+      }
+    }
     let message = error.message || "Email authentication failed.";
-    if (error.code === "auth/user-not-found" || error.code === "auth/invalid-credential") message = "No matching registered account was found, or the password is incorrect. Register first if you are new.";
+    if (error.code === "auth/user-not-found" || error.code === "auth/invalid-credential") message = "No matching registered account was found, or the password is incorrect. Tap Log in and use the original email and password, or register if you are new.";
     else if (error.code === "auth/email-already-in-use") message = "This email is already registered. Choose Log in.";
     else if (error.code === "auth/weak-password") message = "Use a password with at least 6 characters.";
     showAuthMessage(message);
