@@ -18,16 +18,16 @@ app.use(express.static(path.join(__dirname, "public")));
 const adapter = new JSONFile("db.json");
 const db = new Low(adapter, {
   contestants: [
-    { id: 1, name: "MY KIMMY 1", votes: 0 },
-    { id: 2, name: "AFRO SINEMA 2", votes: 0 },
-    { id: 3, name: "Contestant 3", votes: 0 },
-    { id: 4, name: "Contestant 4", votes: 0 },
-    { id: 5, name: "Contestant 5", votes: 0 },
-    { id: 6, name: "Contestant 6", votes: 0 },
-    { id: 7, name: "Contestant 7", votes: 0 },
-    { id: 8, name: "Contestant 8", votes: 0 },
-    { id: 9, name: "Contestant 9", votes: 0 },
-    { id: 10, name: "Contestant 10", votes: 0 }
+    { id: 1, name: "ChatGPT Nova", icon: "🤖", votes: 0 },
+    { id: 2, name: "Gemini Spark", icon: "✨", votes: 0 },
+    { id: 3, name: "Claude Atlas", icon: "🧠", votes: 0 },
+    { id: 4, name: "Copilot Pulse", icon: "🚀", votes: 0 },
+    { id: 5, name: "Meta AI Muse", icon: "🌟", votes: 0 },
+    { id: 6, name: "Grok Orbit", icon: "🪐", votes: 0 },
+    { id: 7, name: "Perplexity Prism", icon: "🔎", votes: 0 },
+    { id: 8, name: "DeepSeek Wave", icon: "🌊", votes: 0 },
+    { id: 9, name: "Mistral Pixel", icon: "🎨", votes: 0 },
+    { id: 10, name: "TikTok AI Beat", icon: "🎵", votes: 0 }
   ],
   transactions: []
 });
@@ -36,8 +36,25 @@ async function loadDb() {
   await db.read();
   if (!db.data) {
     db.data = { contestants: [], transactions: [] };
-    await db.write();
   }
+
+  // Demo contestant names/icons are refreshed for testing without resetting
+  // vote totals or transaction records.
+  const demoContestants = [{"id":1,"name":"ChatGPT Nova","icon":"🤖"},{"id":2,"name":"Gemini Spark","icon":"✨"},{"id":3,"name":"Claude Atlas","icon":"🧠"},{"id":4,"name":"Copilot Pulse","icon":"🚀"},{"id":5,"name":"Meta AI Muse","icon":"🌟"},{"id":6,"name":"Grok Orbit","icon":"🪐"},{"id":7,"name":"Perplexity Prism","icon":"🔎"},{"id":8,"name":"DeepSeek Wave","icon":"🌊"},{"id":9,"name":"Mistral Pixel","icon":"🎨"},{"id":10,"name":"TikTok AI Beat","icon":"🎵"}];
+  if (!Array.isArray(db.data.contestants)) db.data.contestants = [];
+  for (const demo of demoContestants) {
+    const existing = db.data.contestants.find(c => Number(c.id) === demo.id);
+    if (existing) {
+      existing.name = demo.name;
+      existing.icon = demo.icon;
+      if (!Number.isFinite(Number(existing.votes))) existing.votes = 0;
+    } else {
+      db.data.contestants.push({ ...demo, votes: 0 });
+    }
+  }
+  db.data.contestants.sort((a, b) => Number(a.id) - Number(b.id));
+  if (!Array.isArray(db.data.transactions)) db.data.transactions = [];
+  await db.write();
 }
 
 async function getAccessToken() {
