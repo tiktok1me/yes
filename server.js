@@ -241,7 +241,7 @@ function normalizeVideoLink(raw) {
   try {
     const url = new URL(String(raw || "").trim());
     if (url.protocol !== "https:") return null;
-    const host = url.hostname.toLowerCase().replace(/^www\\./, "");
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
     if (host === "youtube.com" || host === "m.youtube.com" || host === "youtu.be" || host === "youtube-nocookie.com") {
       let id = "";
       if (host === "youtu.be") id = url.pathname.split("/").filter(Boolean)[0] || "";
@@ -251,7 +251,7 @@ function normalizeVideoLink(raw) {
       return { type: "youtube", url: url.toString(), embedUrl: "https://www.youtube-nocookie.com/embed/" + id };
     }
     if (host === "tiktok.com" || host.endsWith(".tiktok.com")) {
-      if (!/^\\/@[A-Za-z0-9._-]+\\/video\\/\\d+/.test(url.pathname)) return null;
+      if (!/^\/@[A-Za-z0-9._-]+\/video\/\d+/.test(url.pathname)) return null;
       return { type: "tiktok", url: url.toString(), embedUrl: "" };
     }
     return null;
