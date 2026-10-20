@@ -6,6 +6,8 @@ const { Low } = require("lowdb");
 const { JSONFile } = require("lowdb/node");
 const path = require("path");
 const crypto = require("crypto");
+const fs = require("fs");
+const multer = require("multer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,6 +16,33 @@ const MPESA_BASE_URL = process.env.MPESA_ENV === "production" ? "https://api.saf
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
+const uploadsDir = path.join(__dirname, "uploads");
+fs.mkdirSync(uploadsDir, { recursive: true });
+app.use("/uploads", express.static(uploadsDir));
+const videoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadsDir),
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname || "").toLowerCase().replace(/[^.a-z0-9]/g, "").slice(0, 10);
+      cb(null, "contestant-" + req.params.id + "-" + Date.now() + "-" + crypto.randomBytes(5).toString("hex") + (ext || ".mp4"));
+    }
+  }),
+  limits: { fileSize: 100 * 1024 * 1024, files: 1 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype && file.mimetype.startsWith("video/")) return cb(null, true);
+    cb(new Error("Please choose a video file."));
+  }
+});
+
+function requireVideoAdmin(req, res, next) {
+  const configuredPassword = process.env.ADMIN_PASSWORD;
+  if (!configuredPassword) return res.status(503).json({ error: "Admin video tools are not configured. Set ADMIN_PASSWORD in Render environment variables first." });
+  const supplied = String(req.get("x-admin-password") || "");
+  const a = Buffer.from(supplied);
+  const b = Buffer.from(configuredPassword);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return res.status(401).json({ error: "Admin password is incorrect." });
+  next();
+}
 
 const adapter = new JSONFile("db.json");
 const db = new Low(adapter, {
@@ -206,6 +235,84 @@ app.get("/auth/tiktok/callback", async (req, res) => {
   }
 });
 // -------------------------------------------------------------------------------
+
+// Contestant video albums: links are public; adding/removing media requires ADMIN_PASSWORD.
+function normalizeVideoLink(raw) {
+  try {
+    const url = new URL(String(raw || "").trim());
+    if (url.protocol !== "https:") return null;
+    const host = url.hostname.toLowerCase().replace(/^www\\./, "");
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "youtu.be" || host === "youtube-nocookie.com") {
+      let id = "";
+      if (host === "youtu.be") id = url.pathname.split("/").filter(Boolean)[0] || "";
+      else if (url.pathname === "/watch") id = url.searchParams.get("v") || "";
+      else if (/^\\/(embed|shorts|live)\\//.test(url.pathname)) id = url.pathname.split("/")[2] || "";
+      if (!/^[A-Za-z0-9_-]{6,20}$/.test(id)) return null;
+      return { type: "youtube", url: url.toString(), embedUrl: "https://www.youtube-nocookie.com/embed/" + id };
+    }
+    if (host === "tiktok.com" || host.endsWith(".tiktok.com")) {
+      if (!/^\\/@[A-Za-z0-9._-]+\\/video\\/\\d+/.test(url.pathname)) return null;
+      return { type: "tiktok", url: url.toString(), embedUrl: "" };
+    }
+    return null;
+  } catch { return null; }
+}
+
+app.get("/api/contestants/:id/videos", async (req, res) => {
+  await loadDb();
+  const contestant = db.data.contestants.find(c => Number(c.id) === Number(req.params.id));
+  if (!contestant) return res.status(404).json({ error: "Contestant not found." });
+  res.json({ videos: Array.isArray(contestant.videos) ? contestant.videos : [] });
+});
+
+app.post("/api/admin/contestants/:id/videos/link", requireVideoAdmin, async (req, res) => {
+  await loadDb();
+  const contestant = db.data.contestants.find(c => Number(c.id) === Number(req.params.id));
+  if (!contestant) return res.status(404).json({ error: "Contestant not found." });
+  const video = normalizeVideoLink(req.body && req.body.url);
+  if (!video) return res.status(400).json({ error: "Enter a valid HTTPS YouTube video or TikTok video link." });
+  if (!Array.isArray(contestant.videos)) contestant.videos = [];
+  contestant.videos.push({ id: crypto.randomUUID(), ...video, addedAt: new Date().toISOString() });
+  await db.write();
+  res.json({ success: true, videos: contestant.videos });
+});
+
+app.post("/api/admin/contestants/:id/videos/upload", requireVideoAdmin, (req, res) => {
+  videoUpload.single("video")(req, res, async error => {
+    if (error) return res.status(error.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({ error: error.message || "Video upload failed." });
+    try {
+      await loadDb();
+      const contestant = db.data.contestants.find(c => Number(c.id) === Number(req.params.id));
+      if (!contestant) {
+        if (req.file) fs.unlink(req.file.path, () => {});
+        return res.status(404).json({ error: "Contestant not found." });
+      }
+      if (!req.file) return res.status(400).json({ error: "Choose a video file first." });
+      if (!Array.isArray(contestant.videos)) contestant.videos = [];
+      contestant.videos.push({ id: crypto.randomUUID(), type: "upload", url: "/uploads/" + req.file.filename, embedUrl: "", originalName: path.basename(req.file.originalname).slice(0, 150), addedAt: new Date().toISOString() });
+      await db.write();
+      res.json({ success: true, videos: contestant.videos, message: "Video uploaded." });
+    } catch (e) {
+      console.error("Video upload error:", e);
+      res.status(500).json({ error: "Could not save the video to the contestant album." });
+    }
+  });
+});
+
+app.delete("/api/admin/contestants/:id/videos/:videoId", requireVideoAdmin, async (req, res) => {
+  await loadDb();
+  const contestant = db.data.contestants.find(c => Number(c.id) === Number(req.params.id));
+  if (!contestant) return res.status(404).json({ error: "Contestant not found." });
+  const videos = Array.isArray(contestant.videos) ? contestant.videos : [];
+  const removed = videos.find(v => v.id === req.params.videoId);
+  contestant.videos = videos.filter(v => v.id !== req.params.videoId);
+  if (removed && removed.type === "upload" && String(removed.url || "").startsWith("/uploads/")) {
+    const filePath = path.join(uploadsDir, path.basename(removed.url));
+    fs.unlink(filePath, () => {});
+  }
+  await db.write();
+  res.json({ success: true, videos: contestant.videos });
+});
 
 app.get("/api/contestants", async (req, res) => {
   await loadDb();
