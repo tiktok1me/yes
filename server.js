@@ -314,6 +314,26 @@ app.delete("/api/admin/contestants/:id/videos/:videoId", requireVideoAdmin, asyn
   res.json({ success: true, videos: contestant.videos });
 });
 
+
+app.post("/api/admin/login", (req, res) => {
+  const configuredPassword = process.env.ADMIN_PASSWORD;
+  if (!configuredPassword) return res.status(503).json({ error: "Admin is not configured. Add ADMIN_PASSWORD in Render Environment first." });
+  const supplied = String(req.body && req.body.password || "");
+  const a = Buffer.from(supplied);
+  const b = Buffer.from(configuredPassword);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return res.status(401).json({ error: "Incorrect admin password." });
+  res.json({ success: true });
+});
+
+app.get("/api/admin/overview", requireVideoAdmin, async (req, res) => {
+  await loadDb();
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    contestants: db.data.contestants.map(c => ({ id: c.id, name: c.name, votes: c.votes, icon: c.icon || "", photoUrl: c.photoUrl || "" })),
+    transactions: (db.data.transactions || []).map(t => ({ contestantId: t.contestantId, phoneLast4: t.phoneLast4 || "", votes: t.votes, amount: t.amount, status: t.status, createdAt: t.createdAt, receipt: t.mpesaReceiptNumber || "" }))
+  });
+});
+
 app.get("/api/contestants", async (req, res) => {
   await loadDb();
   res.json(db.data.contestants);
