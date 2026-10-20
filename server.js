@@ -246,7 +246,7 @@ function normalizeVideoLink(raw) {
       let id = "";
       if (host === "youtu.be") id = url.pathname.split("/").filter(Boolean)[0] || "";
       else if (url.pathname === "/watch") id = url.searchParams.get("v") || "";
-      else if (/^\\/(embed|shorts|live)\\//.test(url.pathname)) id = url.pathname.split("/")[2] || "";
+      else if (["/embed/", "/shorts/", "/live/"].some(prefix => url.pathname.startsWith(prefix))) id = url.pathname.split("/")[2] || "";
       if (!/^[A-Za-z0-9_-]{6,20}$/.test(id)) return null;
       return { type: "youtube", url: url.toString(), embedUrl: "https://www.youtube-nocookie.com/embed/" + id };
     }
