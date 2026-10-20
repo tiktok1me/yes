@@ -179,6 +179,8 @@
     <button type="button" onclick="document.getElementById('profileImageInput').click()">Change profile photo</button>
     <input id="profileImageInput" type="file" accept="image/*" onchange="saveProfilePhoto(event)">
     <button type="button" onclick="addAccount()">Add account</button>
+    <button type="button" onclick="shareWebsite()">🔗 Share website</button>
+    <button type="button" onclick="inviteFacebookFriends()">📘 Invite friends on Facebook</button>
     <button type="button" class="secondary" onclick="logoutAccount()">Sign out</button>
     <button type="button" class="secondary" onclick="toggleSettings()">Close</button>
   </div>
@@ -515,6 +517,34 @@ function toggleSettings() {
   const panel = document.getElementById("settingsPanel");
   panel.style.display =
     panel.style.display === "block" ? "none" : "block";
+}
+
+async function shareWebsite() {
+  const shareData = {
+    title: "tiktokchallengeme",
+    text: "Join tiktokchallengeme and take part in the voting!",
+    url: window.location.href
+  };
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(shareData.url);
+      alert("Website link copied. You can now paste it into a message.");
+    } else {
+      window.prompt("Copy this website link to share:", shareData.url);
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      window.prompt("Copy this website link to share:", shareData.url);
+    }
+  }
+}
+
+function inviteFacebookFriends() {
+  const pageUrl = encodeURIComponent(window.location.href);
+  const shareUrl = "https://www.facebook.com/sharer/sharer.php?u=" + pageUrl;
+  window.open(shareUrl, "_blank", "noopener,noreferrer");
 }
 
 async function addAccount() {
