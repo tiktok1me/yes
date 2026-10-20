@@ -112,7 +112,7 @@
     <button class="auth-option phone-option" onclick="chooseAuthMethod('phone')"><span class="auth-icon">📱</span><span id="phoneChoiceLabel">Register with Phone</span></button>
     <button class="auth-option email-option" onclick="chooseAuthMethod('email')"><span class="auth-icon">✉</span><span id="emailChoiceLabel">Register with Email</span></button>
     <button class="auth-option" onclick="beginTikTokSignIn()" style="background:#111827;color:#fff;border-color:#111827;"><span class="auth-icon">♪</span><span>Continue with TikTok</span></button>
-    <p><button class="secondary" onclick="showWelcome()">Back to welcome</button></p>
+    <p><button class="secondary" onclick="showWelcome()">← Back to welcome</button></p>
   </div>
   <div id="googleAuthPanel" class="method-panel" style="display:none;">
     <h2 id="googlePanelTitle">Register with Google</h2><p>Use your Google account to continue.</p>
@@ -153,6 +153,7 @@
     <button type="button" onclick="toggleSettings()" style="padding:12px 16px;border:1px solid #dbe3ee;border-radius:14px;background:#fff;cursor:pointer;font-size:16px;">👤 Profile / Settings</button>
     <button type="button" onclick="openAIChat()" style="padding:12px 16px;border:1px solid #dbe3ee;border-radius:14px;background:#e6f8ef;color:#087f5b;cursor:pointer;font-size:16px;">✳ ChatGPT</button>
   </div>
+  <button type="button" onclick="goBackFromMemberRoom()" style="margin:12px 6px 0;padding:12px 18px;background:#64748b;color:#fff;border-radius:10px;">← Back</button>
   <button type="button" onclick="enterVotingRoom()" style="width:min(100%,420px);padding:20px 24px;border:0;border-radius:18px;background:#111827;color:white;font-size:23px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(15,23,42,.2);">🗳️ ENTER VOTING</button>
 </section>
 
@@ -237,6 +238,7 @@
 
 <div id="votingRoom" style="display:none;">
 <header style="display:none;">
+  <button type="button" onclick="goBackFromVotingRoom()" style="background:#4b5568;color:#fff;margin-bottom:12px;">← Back to member room</button>
   <h1>tiktokchallengeme</h1>
   <p>Vote for your favourite contestant — KSh 1 per vote</p>
 </header>
@@ -936,6 +938,24 @@ function escapeHtml(value) {
 }
 
 loadContestants();
+
+function goBackFromMemberRoom() {
+  const member = document.getElementById("memberRoom");
+  const postLogin = document.getElementById("postLoginWelcome");
+  const auth = document.getElementById("authScreen");
+  if (member) member.style.display = "none";
+  if (postLogin) postLogin.style.display = "none";
+  if (auth) auth.style.display = "block";
+  if (typeof showAuthChoices === "function") showAuthChoices();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function goBackFromVotingRoom() {
+  const room = document.getElementById("votingRoom");
+  if (room) room.style.display = "none";
+  const member = document.getElementById("memberRoom");
+  if (member) member.style.display = "block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
 </script>
 </body>
 </html>
