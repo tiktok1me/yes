@@ -64,7 +64,7 @@ async function getAccessToken() {
 // OAuth secrets stay on the server. Only approved public profile details are sent to
 // the browser; access tokens are never placed in URLs or localStorage.
 function socialBaseUrl(req) {
-  const configured = process.env.SOCIAL_BASE_URL;
+  const configured = process.env.SOCIAL_BASE_URL || process.env.RENDER_EXTERNAL_URL;
   if (configured) return configured.replace(/\/+$/, "");
   const forwardedProto = req.headers["x-forwarded-proto"];
   const protocol = forwardedProto ? String(forwardedProto).split(",")[0] : req.protocol;
@@ -132,9 +132,9 @@ app.get("/auth/facebook/callback", async (req, res) => {
 });
 
 app.get("/auth/instagram", (req, res) => {
-  const appId = process.env.INSTAGRAM_APP_ID || process.env.META_APP_ID;
-  const appSecret = process.env.INSTAGRAM_APP_SECRET || process.env.META_APP_SECRET;
-  if (!appId || !appSecret) return socialSetupNeeded(res, "instagram", "Instagram login is not active yet. Configure the Instagram API with Instagram Login and its app credentials in Render.", req);
+  const appId = process.env.INSTAGRAM_APP_ID;
+  const appSecret = process.env.INSTAGRAM_APP_SECRET;
+  if (!appId || !appSecret) return socialSetupNeeded(res, "instagram", "Instagram login is not active yet. Configure the Instagram API with Instagram Login and add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET in Render.", req);
   const state = crypto.randomBytes(32).toString("hex");
   setSocialStateCookie(res, "instagram", state, req);
   const url = new URL("https://www.instagram.com/oauth/authorize");
@@ -147,8 +147,8 @@ app.get("/auth/instagram/callback", async (req, res) => {
   if (!stateCookie || !req.query.state || req.query.state !== stateCookie) return res.status(400).send("Instagram sign-in state check failed. Please try again.");
   if (req.query.error || !req.query.code) return res.status(400).send("Instagram sign-in was cancelled or denied. Return to the website and try again.");
   try {
-    const appId = process.env.INSTAGRAM_APP_ID || process.env.META_APP_ID;
-    const appSecret = process.env.INSTAGRAM_APP_SECRET || process.env.META_APP_SECRET;
+    const appId = process.env.INSTAGRAM_APP_ID;
+    const appSecret = process.env.INSTAGRAM_APP_SECRET;
     const redirectUri = socialRedirectUri(req, "instagram");
     const tokenBody = new URLSearchParams({ client_id: appId, client_secret: appSecret, grant_type: "authorization_code", redirect_uri: redirectUri, code: String(req.query.code) });
     const tokenResponse = await axios.post("https://api.instagram.com/oauth/access_token", tokenBody.toString(), { headers: { "Content-Type": "application/x-www-form-urlencoded" } });
