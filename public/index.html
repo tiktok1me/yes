@@ -259,14 +259,15 @@
   <h1>tiktokchallengeme</h1>
   <p>Vote for your favourite contestant — KSh 1 per vote</p>
 </header>
-<main style="display:none;">
+<main style="display:block;">
   <div class="notice">
     <strong>How voting works:</strong> Select a contestant, choose the number of votes,
     enter your M-Pesa number and complete the STK prompt on your phone.
   </div>
   <section id="contestants" class="grid"></section>
   <section id="transactionHistory" class="notice" aria-live="polite" style="margin-top:24px;">
-    <h2 style="margin-top:0;">💳 Your M-Pesa transactions</h2>
+    <h2 style="margin-top:0;">🧾 Transaction History</h2>
+    <p><button type="button" class="secondary" onclick="document.getElementById('transactionHistory').scrollIntoView({behavior:'smooth',block:'start'})">💳 Open M-Pesa transactions</button></p>
     <p style="color:#cbd5e1;">Payments started on this browser appear here with their latest status.</p>
     <div id="transactionList"><p>No transactions yet. Your payment attempts will appear here.</p></div>
     <button type="button" class="secondary" onclick="refreshTransactionHistory()">Refresh transactions</button>
