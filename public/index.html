@@ -597,25 +597,17 @@ async function submitEmailAuth() {
       chooseAuthMethod("email");
       return showAuthMessage("Registration started. Open the verification link sent to your email, then log in. Firebase sends an email link, not a numeric email code.");
     }
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    await result.user.reload();
-    if (!result.user.emailVerified) {
-      await signOut(auth);
-      showAuthMessage("Verify your email using the link we sent before logging in.");
-    }
+    // Returning members log in with their original email and password.
+    // Do not require a new email verification code/link on every login.
+    await signInWithEmailAndPassword(auth, email, password);
+    showAuthMessage("");
   } catch (error) {
     if (error.code === "auth/email-already-in-use" && authMode === "register") {
       // If this email already has an account, try the same entered credentials
       // so returning members can continue without registering a second time.
       try {
-        const existing = await signInWithEmailAndPassword(auth, email, password);
-        await existing.user.reload();
-        if (!existing.user.emailVerified) {
-          await signOut(auth);
-          setAuthMode("login");
-          chooseAuthMethod("email");
-          showAuthMessage("This account already exists. Open the verification link sent to your email, then log in with the same email and password.");
-        }
+        await signInWithEmailAndPassword(auth, email, password);
+        showAuthMessage("");
         return;
       } catch (loginError) {
         setAuthMode("login");
@@ -673,19 +665,8 @@ async function verifyPhoneCode() {
 
 onAuthStateChanged(auth, user => {
   if (user) {
-    if (
-      user.providerData.some(p => p.providerId === "password") &&
-      !user.emailVerified
-    ) {
-      // Keep the user on the authentication screen while registration or
-      // verification is in progress. Do not let this listener send them
-      // back to Welcome while submitEmailAuth() is showing the next step.
-      signOut(auth).catch(() => {});
-      showSignIn("login");
-      chooseAuthMethod("email");
-      showAuthMessage("Please verify your email using the link we sent, then log in with the same email and password.");
-      return;
-    }
+    // Email/password members may enter with their original credentials
+    // without being forced through an email verification link on each login.
     showVotingPage(user);
   } else {
     // Signing out is expected after email registration and after an
