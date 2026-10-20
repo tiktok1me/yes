@@ -85,6 +85,14 @@
     #votingRoom .back-arrow-button{background:#f3f4f6;color:#080a12;border-color:#34344a}
     @media(max-width:600px){.back-arrow-button{width:64px;height:64px;min-width:64px;font-size:44px;bottom:12px}}
     #followUsersPanel{display:none;background:#fff;padding:18px;max-width:600px;margin:12px auto;border-radius:12px;box-shadow:0 3px 14px #00000012}
+    .video-album-button{width:100%;margin-top:10px;background:#3730a3;color:#fff}
+    .video-album-button:hover{background:#4338ca}
+    #videoAlbumDialog{max-width:760px;max-height:90vh;overflow:auto;background:#101321;color:#f3f4f6;border:1px solid #34344a}
+    #videoAlbumDialog input,#videoAlbumDialog select{background:#0e1220;color:#f3f4f6;border:1px solid #424a61}
+    .album-video{padding:12px 0;border-top:1px solid #34344a}
+    .album-video video,.album-video iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
+    .album-admin{padding:16px;margin-top:18px;border:1px solid #424a61;border-radius:12px;background:#171b2b}
+
   </style>
 </head>
 <body>
@@ -278,6 +286,28 @@
       <button onclick="startPayment()">Pay with M-Pesa</button>
     </div>
     <div id="status"></div>
+  </div>
+</dialog>
+
+<dialog id="videoAlbumDialog">
+  <div class="modal">
+    <h2 id="videoAlbumTitle">🎬 Video Album</h2>
+    <p id="videoAlbumDescription">Watch videos about this contestant.</p>
+    <div id="videoAlbumItems"><p>Loading videos…</p></div>
+    <section class="album-admin">
+      <h3 style="margin-top:0;">🔐 Admin video tools</h3>
+      <p>Only an authorized admin with the configured password can add or remove videos.</p>
+      <label for="videoAdminPassword">Admin password</label>
+      <input id="videoAdminPassword" type="password" autocomplete="current-password" placeholder="Enter admin password">
+      <label for="videoLinkInput">YouTube or TikTok video link</label>
+      <input id="videoLinkInput" type="url" placeholder="https://www.youtube.com/watch?v=...">
+      <button type="button" onclick="adminAddVideoLink()">Add video link</button>
+      <label for="videoFileInput">Or upload a video file (maximum 100 MB)</label>
+      <input id="videoFileInput" type="file" accept="video/*">
+      <button type="button" onclick="adminUploadVideo()">Upload video file</button>
+      <p id="videoAdminStatus" role="status" aria-live="polite"></p>
+    </section>
+    <div class="actions"><button type="button" class="secondary" onclick="videoAlbumDialog.close()">Close album</button></div>
   </div>
 </dialog>
 
@@ -1000,8 +1030,134 @@ async function loadContestants() {
       <div class="vote-progress-track" role="progressbar" aria-label="Voting progress for ${escapeHtml(c.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(100, Number(c.votes) || 0)}"><div class="vote-progress-fill" style="width:${Math.min(100, Number(c.votes) || 0)}%"></div></div>
       <br>
       <button onclick="openVote(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')">Vote</button>
+      <button class="video-album-button" onclick="openVideoAlbum(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')">🎬 Video Album</button>
     </article>
   `).join("");
+}
+
+let activeVideoContestantId = null;
+let activeVideoContestantName = "";
+
+async function openVideoAlbum(id, name) {
+  activeVideoContestantId = Number(id);
+  activeVideoContestantName = String(name || "Contestant");
+  document.getElementById("videoAlbumTitle").textContent = "🎬 Video Album — " + activeVideoContestantName;
+  document.getElementById("videoAlbumDescription").textContent = "Videos describing " + activeVideoContestantName + ".";
+  document.getElementById("videoAlbumItems").innerHTML = "<p>Loading videos…</p>";
+  document.getElementById("videoAdminStatus").textContent = "";
+  document.getElementById("videoLinkInput").value = "";
+  document.getElementById("videoFileInput").value = "";
+  document.getElementById("videoAlbumDialog").showModal();
+  await refreshVideoAlbum();
+}
+
+async function refreshVideoAlbum() {
+  const target = document.getElementById("videoAlbumItems");
+  if (!activeVideoContestantId || !target) return;
+  try {
+    const response = await fetch("/api/contestants/" + activeVideoContestantId + "/videos");
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not load videos.");
+    const videos = Array.isArray(data.videos) ? data.videos : [];
+    if (!videos.length) {
+      target.innerHTML = "<p>No videos have been added for this contestant yet.</p>";
+      return;
+    }
+    target.innerHTML = videos.map(video => {
+      let player = "";
+      if (video.type === "upload") {
+        player = '<video controls preload="metadata" src="' + escapeHtml(video.url) + '"></video>';
+      } else if (video.type === "youtube" && video.embedUrl) {
+        player = '<iframe src="' + escapeHtml(video.embedUrl) + '" title="Contestant video" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+      } else {
+        player = '<p>This video is hosted on TikTok.</p><a href="' + escapeHtml(video.url) + '" target="_blank" rel="noopener noreferrer" style="color:#7dd3fc;">▶ Watch on TikTok</a>';
+      }
+      return '<article class="album-video">' + player + '<p>' + escapeHtml(video.originalName || (video.type === "youtube" ? "YouTube video" : video.type === "tiktok" ? "TikTok video" : "Contestant video")) + '</p><a href="' + escapeHtml(video.url) + '" target="_blank" rel="noopener noreferrer" style="color:#7dd3fc;">Open original video</a><br><button type="button" class="secondary" style="margin-top:8px;" onclick="adminDeleteVideo(\'' + escapeHtml(String(video.id)) + '\')">Remove (admin)</button></article>';
+    }).join("");
+  } catch (error) {
+    target.innerHTML = '<p style="color:#fca5a5;">' + escapeHtml(error.message || "Could not load videos.") + '</p>';
+  }
+}
+
+async function adminAddVideoLink() {
+  const password = document.getElementById("videoAdminPassword").value;
+  const url = document.getElementById("videoLinkInput").value.trim();
+  const status = document.getElementById("videoAdminStatus");
+  if (!password || !url) {
+    status.textContent = "Enter the admin password and a YouTube or TikTok link.";
+    return;
+  }
+  status.textContent = "Adding video link…";
+  try {
+    const response = await fetch("/api/admin/contestants/" + activeVideoContestantId + "/videos/link", {
+      method: "POST",
+      headers: {"Content-Type":"application/json","x-admin-password":password},
+      body: JSON.stringify({url})
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not add video link.");
+    document.getElementById("videoLinkInput").value = "";
+    status.textContent = "Video link added to " + activeVideoContestantName + "'s album.";
+    await refreshVideoAlbum();
+    await loadContestants();
+  } catch (error) {
+    status.textContent = error.message || "Could not add video link.";
+  }
+}
+
+async function adminUploadVideo() {
+  const password = document.getElementById("videoAdminPassword").value;
+  const fileInput = document.getElementById("videoFileInput");
+  const status = document.getElementById("videoAdminStatus");
+  if (!password || !fileInput.files || !fileInput.files[0]) {
+    status.textContent = "Enter the admin password and choose a video file.";
+    return;
+  }
+  if (fileInput.files[0].size > 100 * 1024 * 1024) {
+    status.textContent = "This file is over 100 MB. Choose a smaller video.";
+    return;
+  }
+  const form = new FormData();
+  form.append("video", fileInput.files[0]);
+  status.textContent = "Uploading video… please wait.";
+  try {
+    const response = await fetch("/api/admin/contestants/" + activeVideoContestantId + "/videos/upload", {
+      method: "POST",
+      headers: {"x-admin-password":password},
+      body: form
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Video upload failed.");
+    fileInput.value = "";
+    status.textContent = data.message || "Video uploaded.";
+    await refreshVideoAlbum();
+    await loadContestants();
+  } catch (error) {
+    status.textContent = error.message || "Video upload failed.";
+  }
+}
+
+async function adminDeleteVideo(videoId) {
+  const password = document.getElementById("videoAdminPassword").value;
+  const status = document.getElementById("videoAdminStatus");
+  if (!password) {
+    status.textContent = "Enter the admin password first to remove a video.";
+    return;
+  }
+  if (!confirm("Remove this video from the album?")) return;
+  status.textContent = "Removing video…";
+  try {
+    const response = await fetch("/api/admin/contestants/" + activeVideoContestantId + "/videos/" + encodeURIComponent(videoId), {
+      method: "DELETE",
+      headers: {"x-admin-password":password}
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not remove video.");
+    status.textContent = "Video removed.";
+    await refreshVideoAlbum();
+  } catch (error) {
+    status.textContent = error.message || "Could not remove video.";
+  }
 }
 
 function openVote(id, name) {
