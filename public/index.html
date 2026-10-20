@@ -257,6 +257,12 @@
     enter your M-Pesa number and complete the STK prompt on your phone.
   </div>
   <section id="contestants" class="grid"></section>
+  <section id="transactionHistory" class="notice" aria-live="polite" style="margin-top:24px;">
+    <h2 style="margin-top:0;">💳 Your M-Pesa transactions</h2>
+    <p style="color:#cbd5e1;">Payments started on this browser appear here with their latest status.</p>
+    <div id="transactionList"><p>No transactions yet. Your payment attempts will appear here.</p></div>
+    <button type="button" class="secondary" onclick="refreshTransactionHistory()">Refresh transactions</button>
+  </section>
 </main>
 </div>
 
@@ -927,6 +933,61 @@ window.goBackFromVotingRoom = goBackFromVotingRoom;
 <script>
 
 let selectedContestant = null;
+const TRANSACTION_STORAGE_KEY = "tiktokchallengeme_my_transactions";
+
+function readMyTransactions() {
+  try {
+    const items = JSON.parse(localStorage.getItem(TRANSACTION_STORAGE_KEY) || "[]");
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMyTransactions(items) {
+  localStorage.setItem(TRANSACTION_STORAGE_KEY, JSON.stringify(items.slice(0, 30)));
+}
+
+function renderTransactionHistory() {
+  const target = document.getElementById("transactionList");
+  if (!target) return;
+  const items = readMyTransactions();
+  if (!items.length) {
+    target.innerHTML = '<p>No transactions yet. Your payment attempts will appear here.</p>';
+    return;
+  }
+  target.innerHTML = items.map(item => {
+    const status = String(item.status || "PENDING").toUpperCase();
+    const statusColor = status === "PAID" ? "#4ade80" : status === "FAILED" ? "#f87171" : "#fbbf24";
+    const date = item.createdAt ? new Date(item.createdAt).toLocaleString() : "Date unavailable";
+    return `<article style="padding:12px 0;border-top:1px solid #34344a;">
+      <strong>${escapeHtml(item.contestantName || "Contestant")}</strong>
+      <div>${Number(item.votes) || 0} vote(s) · KSh ${Number(item.amount) || 0} · M-Pesa ending ${escapeHtml(item.phoneLast4 || "----")}</div>
+      <div style="font-size:13px;color:#cbd5e1;margin-top:4px;">${escapeHtml(date)} · <strong style="color:${statusColor}">${escapeHtml(status)}</strong>${item.receipt ? " · Receipt: " + escapeHtml(item.receipt) : ""}</div>
+    </article>`;
+  }).join("");
+}
+
+async function refreshTransactionHistory() {
+  const items = readMyTransactions();
+  const updated = await Promise.all(items.map(async item => {
+    if (!item.checkoutRequestId || item.status === "PAID" || item.status === "FAILED") return item;
+    try {
+      const response = await fetch("/api/payment/" + encodeURIComponent(item.checkoutRequestId));
+      if (response.ok) {
+        const payment = await response.json();
+        item.status = payment.status || item.status;
+        item.receipt = payment.receipt || item.receipt || "";
+      }
+    } catch (error) {
+      console.warn("Could not refresh transaction status", error);
+    }
+    return item;
+  }));
+  saveMyTransactions(updated);
+  renderTransactionHistory();
+}
+
 async function loadContestants() {
   const response = await fetch("/api/contestants");
   const contestants = await response.json();
@@ -965,6 +1026,19 @@ async function startPayment() {
   status.textContent = data.message || data.error;
   if (data.success) {
     const checkoutId = data.checkoutRequestId;
+    const contestantName = document.getElementById("voteTitle").textContent.replace(/^Vote for /, "");
+    const myTransactions = readMyTransactions();
+    myTransactions.unshift({
+      checkoutRequestId: checkoutId,
+      contestantName,
+      votes,
+      amount: votes,
+      phoneLast4: phone.slice(-4),
+      status: "PENDING",
+      createdAt: new Date().toISOString()
+    });
+    saveMyTransactions(myTransactions);
+    renderTransactionHistory();
     let tries = 0;
     const timer = setInterval(async () => {
       tries++;
@@ -973,11 +1047,13 @@ async function startPayment() {
       if (p.status === "PAID") {
         clearInterval(timer);
         status.textContent = "Payment successful! " + p.votes + " vote(s) added.";
+        await refreshTransactionHistory();
         await loadContestants();
         setTimeout(() => voteDialog.close(), 2500);
       } else if (p.status === "FAILED") {
         clearInterval(timer);
         status.textContent = "Payment was not completed. No votes were added.";
+        await refreshTransactionHistory();
       } else if (tries >= 24) {
         clearInterval(timer);
         status.textContent = "Payment is still pending. Check your M-Pesa message; the result will be recorded when Safaricom sends the callback.";
@@ -995,6 +1071,8 @@ function escapeHtml(value) {
 }
 
 loadContestants();
+renderTransactionHistory();
+window.refreshTransactionHistory = refreshTransactionHistory;
 
 function goBackFromMemberRoom() {
   // Return to the first welcome/menu screen, not to a non-existent memberRoom element.
