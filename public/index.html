@@ -61,6 +61,11 @@
     .chat-notice{position:fixed;right:18px;bottom:78px;z-index:1000;width:min(340px,calc(100vw - 36px));background:white;border:1px solid #dbe2ea;border-radius:16px;padding:16px;box-shadow:0 12px 35px #0003;display:none}
     .floating-tools{position:fixed;right:18px;bottom:18px;z-index:999;display:flex;gap:10px}
     #profileImageInput{display:none}
+    .follow-user-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #e5e7eb}
+    .follow-user-meta{min-width:0;overflow-wrap:anywhere}
+    .follow-user-meta small{display:block;color:#64748b;margin-top:3px}
+    .follow-btn{white-space:nowrap;padding:9px 12px}
+    #followUsersPanel{display:none;background:#fff;padding:18px;max-width:600px;margin:12px auto;border-radius:12px;box-shadow:0 3px 14px #00000012}
   </style>
 </head>
 <body>
@@ -125,6 +130,7 @@
     <div style="min-width:0;"><strong id="accountName">My Account</strong><div id="accountEmail" style="font-size:12px;color:#64748b;overflow-wrap:anywhere;"></div></div>
   </div>
   <div class="account-actions">
+    <button type="button" class="round-action" onclick="openFollowUsers()" title="Find and follow users" aria-label="Find and follow users">👥</button>
     <button type="button" class="round-action" onclick="openAppChat()" title="Messages" aria-label="Messages">💬</button>
     <button type="button" class="round-action ai-action" onclick="openAIChat()" title="Ask ChatGPT" aria-label="Ask ChatGPT">✳</button>
   </div>
@@ -141,6 +147,13 @@
     <button type="button" class="secondary" onclick="toggleSettings()">Close</button>
   </div>
   <p style="font-size:13px;color:#64748b;">Your profile photo is saved to this browser. Upload a small image for best results.</p>
+</div>
+<div id="followUsersPanel">
+  <h3 style="margin-top:0;">Find people</h3>
+  <p style="color:#64748b;font-size:14px;">Browse registered tiktokchallengeme users and follow them.</p>
+  <p id="followUsersStatus" role="status">Loading users…</p>
+  <div id="followUsersList"></div>
+  <button type="button" class="secondary" onclick="closeFollowUsers()">Close</button>
 </div>
 <div id="appChatNotice" class="chat-notice" role="status" aria-live="polite">
   <strong>Messages</strong>
@@ -199,6 +212,7 @@ import {
   updateProfile,
   getAdditionalUserInfo
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, getDocs, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCxS9naG8EjqeZK_0WSPqz8wb7ch5UjUas",
@@ -212,6 +226,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const firestore = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 let confirmationResult = null;
 let recaptchaVerifier = null;
@@ -273,6 +288,7 @@ function chooseAuthMethod(method) {
 }
 
 function showVotingPage(user) {
+  saveUserProfile(user).catch(() => {});
   document.getElementById("welcomeScreen").style.display = "none";
   document.getElementById("authScreen").style.display = "none";
   document.getElementById("accountBar").style.display = "flex";
@@ -285,6 +301,65 @@ function showVotingPage(user) {
   document.querySelector("main").style.display = "block";
 }
 
+async function openFollowUsers() {
+  document.getElementById("followUsersPanel").style.display = "block";
+  document.getElementById("appChatNotice").style.display = "none";
+  document.getElementById("aiChatNotice").style.display = "none";
+  await loadFollowUsers();
+}
+function closeFollowUsers() { document.getElementById("followUsersPanel").style.display = "none"; }
+async function saveUserProfile(user) {
+  const name = user.displayName || user.email || user.phoneNumber || "tiktokchallengeme user";
+  await setDoc(doc(firestore, "users", user.uid), {
+    uid: user.uid, displayName: name, email: user.email || "",
+    phoneNumber: user.phoneNumber || "", photoURL: user.photoURL || "",
+    updatedAt: new Date().toISOString()
+  }, { merge: true });
+}
+async function loadFollowUsers() {
+  const status = document.getElementById("followUsersStatus");
+  const list = document.getElementById("followUsersList");
+  list.innerHTML = "";
+  try {
+    const me = auth.currentUser;
+    if (!me) { status.textContent = "Please log in to find users."; return; }
+    status.textContent = "Loading users…";
+    const snapshot = await getDocs(collection(firestore, "users"));
+    const users = snapshot.docs.map(item => item.data()).filter(item => item.uid && item.uid !== me.uid);
+    if (!users.length) { status.textContent = "No other registered profiles found yet."; return; }
+    status.textContent = users.length + " user(s) found";
+    const myDoc = await getDocs(collection(firestore, "users"));
+    const mine = myDoc.docs.find(item => item.id === me.uid);
+    const following = mine && Array.isArray(mine.data().following) ? mine.data().following : [];
+    for (const person of users) {
+      const row = document.createElement("div"); row.className = "follow-user-row";
+      const meta = document.createElement("div"); meta.className = "follow-user-meta";
+      const name = document.createElement("strong"); name.textContent = person.displayName || "tiktokchallengeme user";
+      const detail = document.createElement("small"); detail.textContent = person.email || person.phoneNumber || "Member";
+      meta.append(name, detail);
+      const button = document.createElement("button"); button.className = "follow-btn";
+      const isFollowing = following.includes(person.uid);
+      button.textContent = isFollowing ? "Following ✓" : "Follow";
+      button.className += isFollowing ? " secondary" : "";
+      button.onclick = () => toggleFollowUser(person.uid, !isFollowing);
+      row.append(meta, button); list.append(row);
+    }
+  } catch (error) {
+    status.textContent = "Could not load users. Enable Cloud Firestore and configure its security rules in Firebase Console.";
+  }
+}
+async function toggleFollowUser(uid, shouldFollow) {
+  const me = auth.currentUser;
+  if (!me || uid === me.uid) return;
+  try {
+    const myRef = doc(firestore, "users", me.uid);
+    if (shouldFollow) await updateDoc(myRef, { following: arrayUnion(uid) });
+    else await updateDoc(myRef, { following: arrayRemove(uid) });
+    await loadFollowUsers();
+  } catch (error) {
+    document.getElementById("followUsersStatus").textContent = "Follow could not be saved. Cloud Firestore and its security rules must be configured first.";
+  }
+}
 function openAIChat() {
   document.getElementById("aiChatNotice").style.display = "block";
   document.getElementById("appChatNotice").style.display = "none";
@@ -464,6 +539,8 @@ window.openAIChat = openAIChat;
 window.closeAIChat = closeAIChat;
 window.goToChatGPT = goToChatGPT;
 window.openAppChat = openAppChat;
+window.openFollowUsers = openFollowUsers;
+window.closeFollowUsers = closeFollowUsers;
 window.closeAppChat = closeAppChat;
 window.saveProfilePhoto = saveProfilePhoto;
 window.addAccount = addAccount;
