@@ -140,7 +140,7 @@
     <button class="auth-option phone-option" onclick="sendPhoneCode()"><span class="auth-icon" aria-hidden="true">📱</span><span>Send verification code</span></button>
     <label for="smsCode">SMS verification code</label><input id="smsCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter code">
     <button class="auth-option phone-option" onclick="verifyPhoneCode()" style="margin-top:12px;"><span class="auth-icon" aria-hidden="true">✓</span><span id="verifyPhoneLabel">Verify and register</span></button>
-    <p style="text-align:center;"><button class="secondary" onclick="showAuthChoices()">← Back to methods</button></p>
+    <button type="button" class="back-arrow-button" onclick="showAuthChoices()" aria-label="Back to methods" title="Back">←</button>
   </div>
 </section>
 
