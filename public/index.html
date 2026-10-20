@@ -14,6 +14,9 @@
     .card{background:white;border-radius:16px;padding:20px;box-shadow:0 3px 14px #00000012}
     .avatar{height:130px;border-radius:12px;background:#e5e7eb;display:grid;place-items:center;font-size:42px;font-weight:bold;color:#64748b}
     .card h3{margin:14px 0 6px}.votes{color:#64748b;font-size:14px}
+    .vote-progress-label{display:flex;justify-content:space-between;gap:8px;margin:10px 0 5px;color:#475569;font-size:12px}
+    .vote-progress-track{height:10px;width:100%;overflow:hidden;border-radius:999px;background:#e2e8f0}
+    .vote-progress-fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#16a34a,#22d3ee);transition:width .35s ease}
     button{border:0;border-radius:10px;padding:11px 15px;background:#16a34a;color:white;font-weight:bold;cursor:pointer}
     button:hover{background:#15803d}
     dialog{border:0;border-radius:18px;padding:0;max-width:420px;width:92%;box-shadow:0 20px 60px #0006}
@@ -672,7 +675,9 @@ async function loadContestants() {
 </div>
 
       <h3>${escapeHtml(c.name)}</h3>
-      <div class="votes">${c.votes} votes</div>
+      <div class="votes">${Number(c.votes) || 0} verified votes</div>
+      <div class="vote-progress-label"><span>Voting progress (toward 100 votes)</span><strong>${Math.min(100, Number(c.votes) || 0)}%</strong></div>
+      <div class="vote-progress-track" role="progressbar" aria-label="Voting progress for ${escapeHtml(c.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(100, Number(c.votes) || 0)}"><div class="vote-progress-fill" style="width:${Math.min(100, Number(c.votes) || 0)}%"></div></div>
       <br>
       <button onclick="openVote(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')">Vote</button>
     </article>
