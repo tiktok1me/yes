@@ -197,9 +197,18 @@
     <input id="tiktokUsername" type="text" autocomplete="off" placeholder="Enter your TikTok username" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
     <button type="button" onclick="saveTikTokUsername()">Save TikTok username</button>
     <button type="button" onclick="openTikTokProfile()">♪ Open TikTok profile</button>
+    <label for="facebookUsername" style="display:block;width:100%;margin-top:8px;">Facebook profile link or username</label>
+    <input id="facebookUsername" type="text" autocomplete="off" placeholder="Paste your Facebook profile link or username" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+    <button type="button" onclick="saveSocialProfile('facebook')">Save Facebook profile</button>
+    <button type="button" onclick="openSocialProfile('facebook')">📘 Open Facebook profile</button>
+    <label for="instagramUsername" style="display:block;width:100%;margin-top:8px;">Instagram username (without @)</label>
+    <input id="instagramUsername" type="text" autocomplete="off" placeholder="Enter your Instagram username" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+    <button type="button" onclick="saveSocialProfile('instagram')">Save Instagram username</button>
+    <button type="button" onclick="openSocialProfile('instagram')">📸 Open Instagram profile</button>
     <button type="button" onclick="shareToTikTok()">↗ Share website for TikTok</button>
+    <button type="button" onclick="inviteFacebookFriends()">📘 Share website on Facebook</button>
+    <button type="button" onclick="shareToInstagram()">📸 Share website on Instagram</button>
     <button type="button" onclick="shareWebsite()">🔗 Share website</button>
-    <button type="button" onclick="inviteFacebookFriends()">📘 Invite friends on Facebook</button>
     <button type="button" class="secondary" onclick="logoutAccount()">Sign out</button>
     <button type="button" class="secondary" onclick="toggleSettings()">Close</button>
   </div>
@@ -538,6 +547,10 @@ function toggleSettings() {
   if (panel.style.display === "block") {
     const field = document.getElementById("tiktokUsername");
     if (field && !field.value) field.value = localStorage.getItem("tiktokchallengeme_tiktok_username") || "";
+    const facebookField = document.getElementById("facebookUsername");
+    if (facebookField && !facebookField.value) facebookField.value = localStorage.getItem("tiktokchallengeme_facebook_profile") || "";
+    const instagramField = document.getElementById("instagramUsername");
+    if (instagramField && !instagramField.value) instagramField.value = localStorage.getItem("tiktokchallengeme_instagram_username") || "";
   }
 }
 
@@ -595,6 +608,72 @@ function beginTikTokSignIn() {
   const status = document.getElementById("authMessage");
   if (status) status.textContent = message;
   alert(message);
+}
+
+function saveSocialProfile(platform) {
+  const fieldId = platform === "facebook" ? "facebookUsername" : "instagramUsername";
+  const field = document.getElementById(fieldId);
+  let value = (field?.value || "").trim();
+  if (!value) {
+    alert(platform === "facebook" ? "Enter your Facebook profile link or username first." : "Enter your Instagram username first.");
+    field?.focus();
+    return;
+  }
+  if (platform === "facebook") {
+    if (!/^https?:\/\//i.test(value)) value = value.replace(/^@+/, "");
+    if (/^https?:\/\//i.test(value) && !/^https?:\/\/(www\.)?facebook\.com\//i.test(value)) {
+      alert("Use a Facebook profile link beginning with https://www.facebook.com/");
+      return;
+    }
+    localStorage.setItem("tiktokchallengeme_facebook_profile", value);
+  } else {
+    value = value.replace(/^@+/, "");
+    if (!/^[A-Za-z0-9._]+$/.test(value)) {
+      alert("Enter a valid Instagram username without @.");
+      field?.focus();
+      return;
+    }
+    localStorage.setItem("tiktokchallengeme_instagram_username", value);
+    if (field) field.value = value;
+  }
+  alert((platform === "facebook" ? "Facebook profile" : "Instagram username") + " saved in this browser.");
+}
+
+function openSocialProfile(platform) {
+  const fieldId = platform === "facebook" ? "facebookUsername" : "instagramUsername";
+  const field = document.getElementById(fieldId);
+  let value = (field?.value || localStorage.getItem(platform === "facebook" ? "tiktokchallengeme_facebook_profile" : "tiktokchallengeme_instagram_username") || "").trim();
+  if (!value) {
+    if (document.getElementById("settingsPanel").style.display !== "block") toggleSettings();
+    document.getElementById(fieldId)?.focus();
+    alert(platform === "facebook" ? "Add your Facebook profile in Profile & settings first." : "Add your Instagram username in Profile & settings first.");
+    return;
+  }
+  let url;
+  if (platform === "facebook") {
+    url = /^https?:\/\//i.test(value) ? value : "https://www.facebook.com/" + encodeURIComponent(value.replace(/^@+/, ""));
+  } else {
+    url = "https://www.instagram.com/" + encodeURIComponent(value.replace(/^@+/, "")) + "/";
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function shareToInstagram() {
+  const shareData = { title: "tiktokchallengeme", text: "Join tiktokchallengeme and vote for your favourite contestant!", url: window.location.origin };
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareData.url);
+      alert("Website link copied. Open Instagram and paste it into a message, story link, or your bio. Instagram does not provide a universal website-share URL.");
+      window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+    } else {
+      window.prompt("Copy this website link, then share it on Instagram:", shareData.url);
+      window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") window.prompt("Copy this website link to share on Instagram:", shareData.url);
+  }
 }
 
 async function shareWebsite() {
