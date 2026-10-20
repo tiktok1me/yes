@@ -927,13 +927,7 @@ async function loadContestants() {
   const contestants = await response.json();
   document.getElementById("contestants").innerHTML = contestants.map(c => `
     <article class="card">
-    
- <div class="avatar">
-  ${c.id === 1
-    ? '<img src="https://marionettestudio.com/wp-content/uploads/2016/11/22-despic-me-2-animation-movie.jpg" alt="Contestant 1" style="width:100%;height:130px;object-fit:cover;border-radius:12px;" onerror="this.style.display=\'none\';this.parentElement.textContent=\'1\';">'
-    : c.id}
-</div>
-
+      <div class="avatar" style="font-size:64px;display:flex;align-items:center;justify-content:center;min-height:130px;" aria-label="${escapeHtml(c.name)} icon">${c.icon || "🤖"}</div>
       <h3>${escapeHtml(c.name)}</h3>
       <div class="votes">${Number(c.votes) || 0} verified votes</div>
       <div class="vote-progress-label"><span>Voting progress (toward 100 votes)</span><strong>${Math.min(100, Number(c.votes) || 0)}%</strong></div>
