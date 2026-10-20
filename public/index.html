@@ -177,10 +177,12 @@
     <h1 class="welcome-title">Welcome to <span>tiktokchallengeme</span></h1>
     <p class="welcome-copy">You're signed in! Explore your member tools, then open the voting room whenever you're ready.</p>
     <div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin:22px 0;">
-      <button type="button" class="round-action" style="width:58px;height:58px;font-size:25px;background:#08080d;box-shadow:-3px 0 #25f4ee,3px 0 #fe2c55;" aria-label="TikTok-style icon" title="TikTok">♪</button>
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:25px;background:#08080d;color:#fff;box-shadow:-3px 0 #25f4ee,3px 0 #fe2c55;cursor:pointer;" onclick="openTikTokProfile()" aria-label="Open TikTok profile" title="Open TikTok profile">♪</button>
       <button type="button" class="round-action ai-action" style="width:58px;height:58px;font-size:25px;" onclick="goToChatGPT()" aria-label="Open ChatGPT" title="ChatGPT">✳</button>
       <button type="button" class="round-action" style="width:58px;height:58px;font-size:25px;background:#111827;color:#fff;" onclick="openTikTokProfile()" aria-label="Open TikTok profile" title="TikTok profile">♪</button>
-      <button type="button" class="round-action" style="width:58px;height:58px;font-size:22px;" onclick="shareToTikTok()" aria-label="Share website">↗</button>
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:22px;" onclick="shareToTikTok()" aria-label="Share website on TikTok" title="Share website on TikTok">↗</button>
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:30px;font-weight:900;background:#1877F2;color:#fff;cursor:pointer;" onclick="openSocialProfile('facebook')" aria-label="Open Facebook profile" title="Facebook">f</button>
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:29px;font-weight:800;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;cursor:pointer;" onclick="openSocialProfile('instagram')" aria-label="Open Instagram profile" title="Instagram">◎</button>
     </div>
     <p id="homeToolsHint" style="color:#d7d7e8;">Your member room is ready.</p>
     <button type="button" class="welcome-next" style="max-width:320px;" onclick="openVotingRoom()">🗳️ Open Voting Room</button>
@@ -318,6 +320,7 @@ function showWelcome() {
   document.getElementById("authScreen").style.display = "none";
   document.getElementById("postLoginWelcome").style.display = "none";
   document.getElementById("accountBar").style.display = "none";
+  document.getElementById("memberHome").style.display = "none";
   document.getElementById("settingsPanel").style.display = "none";
   document.getElementById("followUsersPanel").style.display = "none";
   document.getElementById("votingRoom").style.display = "none";
@@ -940,20 +943,25 @@ function escapeHtml(value) {
 loadContestants();
 
 function goBackFromMemberRoom() {
-  const member = document.getElementById("memberRoom");
-  const postLogin = document.getElementById("postLoginWelcome");
-  const auth = document.getElementById("authScreen");
-  if (member) member.style.display = "none";
-  if (postLogin) postLogin.style.display = "none";
-  if (auth) auth.style.display = "block";
-  if (typeof showAuthChoices === "function") showAuthChoices();
+  // Return to the first welcome/menu screen, not to a non-existent memberRoom element.
+  if (typeof showWelcome === "function") showWelcome();
+  const memberHome = document.getElementById("memberHome");
+  if (memberHome) memberHome.style.display = "none";
+  const votingRoom = document.getElementById("votingRoom");
+  if (votingRoom) votingRoom.style.display = "none";
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function goBackFromVotingRoom() {
   const room = document.getElementById("votingRoom");
   if (room) room.style.display = "none";
-  const member = document.getElementById("memberRoom");
+  const member = document.getElementById("memberHome");
   if (member) member.style.display = "block";
+  const accountBar = document.getElementById("accountBar");
+  if (accountBar) accountBar.style.display = "flex";
+  const settings = document.getElementById("settingsPanel");
+  if (settings) settings.style.display = "none";
+  const follow = document.getElementById("followUsersPanel");
+  if (follow) follow.style.display = "none";
   window.scrollTo({top:0,behavior:"smooth"});
 }
 </script>
