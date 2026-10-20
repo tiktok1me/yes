@@ -295,7 +295,7 @@ function showWelcome() {
   document.querySelector("main").style.display = "none";
 }
 
-function showSignIn() {
+function showSignIn(mode = "register") {
   hidePostLoginWelcome();
   document.getElementById("welcomeScreen").style.display = "none";
   document.getElementById("postLoginWelcome").style.display = "none";
@@ -304,7 +304,7 @@ function showSignIn() {
   document.getElementById("votingRoom").style.display = "none";
   document.querySelector("header").style.display = "none";
   document.querySelector("main").style.display = "none";
-  setAuthMode("register");
+  setAuthMode(mode);
 }
 
 function showPostLoginWelcome(user) {
@@ -681,9 +681,9 @@ onAuthStateChanged(auth, user => {
       // verification is in progress. Do not let this listener send them
       // back to Welcome while submitEmailAuth() is showing the next step.
       signOut(auth).catch(() => {});
-      showSignIn();
+      showSignIn("login");
       chooseAuthMethod("email");
-      showAuthMessage("Please verify your email using the link we sent, then log in.");
+      showAuthMessage("Please verify your email using the link we sent, then log in with the same email and password.");
       return;
     }
     showVotingPage(user);
