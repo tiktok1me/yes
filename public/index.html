@@ -153,6 +153,22 @@
   </div>
 </div>
 
+
+<div id="memberHome" style="display:none;max-width:760px;margin:28px auto;padding:24px 18px;text-align:center;">
+  <section class="welcome-hero" style="padding:30px 20px;border-radius:22px;">
+    <div class="brand-mark" aria-label="TikTok-style music note"><span class="brand-note" aria-hidden="true">♪</span></div>
+    <span class="welcome-kicker">Your member room</span>
+    <h1 class="welcome-title">Welcome to <span>tiktokchallengeme</span></h1>
+    <p class="welcome-copy">You're signed in! Explore your member tools, then open the voting room whenever you're ready.</p>
+    <div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin:22px 0;">
+      <button type="button" class="round-action" style="width:58px;height:58px;font-size:25px;background:#08080d;box-shadow:-3px 0 #25f4ee,3px 0 #fe2c55;" aria-label="TikTok-style icon" title="TikTok">♪</button>
+      <button type="button" class="round-action ai-action" style="width:58px;height:58px;font-size:25px;" onclick="goToChatGPT()" aria-label="Open ChatGPT" title="ChatGPT">✳</button>
+    </div>
+    <p id="homeToolsHint" style="color:#d7d7e8;">Your member room is ready.</p>
+    <button type="button" class="welcome-next" style="max-width:320px;" onclick="openVotingRoom()">🗳️ Open Voting Room</button>
+  </section>
+</div>
+
 <div id="settingsPanel" style="display:none;background:#fff;padding:18px;max-width:500px;margin:12px auto;border-radius:12px;box-shadow:0 3px 14px #00000012;">
   <h3>Profile & settings</h3>
   <p id="settingsAccount"></p>
@@ -357,12 +373,35 @@ function chooseAuthMethod(method) {
 
 function showVotingPage(user) {
   saveUserProfile(user).catch(() => {});
+  document.getElementById("welcomeScreen").style.display = "none";
+  document.getElementById("authScreen").style.display = "none";
+  document.getElementById("accountBar").style.display = "flex";
   document.getElementById("accountName").textContent =
     user.displayName || user.email || user.phoneNumber || "My Account";
   document.getElementById("settingsAccount").textContent = user.email || user.phoneNumber || "Signed in";
   renderProfilePhoto(user.photoURL || localStorage.getItem("tiktokchallengemeProfilePhoto"));
   document.getElementById("accountEmail").textContent = user.email || user.phoneNumber || "";
-  showPostLoginWelcome(user);
+  document.getElementById("memberHome").style.display = "block";
+  document.getElementById("settingsPanel").style.display = "none";
+  document.getElementById("followUsersPanel").style.display = "none";
+  document.querySelector("header").style.display = "none";
+  document.querySelector("main").style.display = "none";
+  const hint = document.getElementById("homeToolsHint");
+  if (hint) {
+    hint.textContent = "Welcome, " + (user.displayName || user.email || user.phoneNumber || "member") + "! Your voting room is separate.";
+    window.setTimeout(() => {
+      if (document.getElementById("memberHome")?.style.display === "block") {
+        hint.textContent = "Your member tools are ready. Press Open Voting Room when you want to vote.";
+      }
+    }, 20000);
+  }
+}
+
+function openVotingRoom() {
+  document.getElementById("memberHome").style.display = "none";
+  document.querySelector("header").style.display = "block";
+  document.querySelector("main").style.display = "block";
+  window.scrollTo({top: 0, behavior: "smooth"});
 }
 
 async function openFollowUsers() {
@@ -595,6 +634,7 @@ onAuthStateChanged(auth, user => {
 });
 
 window.showWelcome = showWelcome;
+window.openVotingRoom = openVotingRoom;
 window.showSignIn = showSignIn;
 window.showAuthChoices = showAuthChoices;
 window.chooseAuthMethod = chooseAuthMethod;
