@@ -401,9 +401,21 @@ function showVotingPage(user) {
 }
 
 function openVotingRoom() {
+  // Show the voting-room wrapper first; otherwise its hidden parent keeps
+  // the header, instructions, and all ten contestants invisible.
   document.getElementById("memberHome").style.display = "none";
-  document.querySelector("header").style.display = "block";
-  document.querySelector("main").style.display = "block";
+  document.getElementById("votingRoom").style.display = "block";
+  document.querySelector("#votingRoom header").style.display = "block";
+  document.querySelector("#votingRoom main").style.display = "block";
+  document.getElementById("settingsPanel").style.display = "none";
+  document.getElementById("followUsersPanel").style.display = "none";
+  document.getElementById("appChatNotice").style.display = "none";
+  document.getElementById("aiChatNotice").style.display = "none";
+  loadContestants().catch(error => {
+    const list = document.getElementById("contestants");
+    if (list) list.innerHTML = '<div class="notice">We could not load the contestants. Please refresh the page and try again.</div>';
+    console.error("Could not load contestants:", error);
+  });
   window.scrollTo({top: 0, behavior: "smooth"});
 }
 
