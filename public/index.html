@@ -368,14 +368,24 @@ onAuthStateChanged(auth, user => {
       user.providerData.some(p => p.providerId === "password") &&
       !user.emailVerified
     ) {
-      signOut(auth);
+      // Keep the user on the authentication screen while registration or
+      // verification is in progress. Do not let this listener send them
+      // back to Welcome while submitEmailAuth() is showing the next step.
+      signOut(auth).catch(() => {});
       showSignIn();
-      showAuthMessage("Please verify your email before continuing.");
+      chooseAuthMethod("email");
+      showAuthMessage("Please verify your email using the link we sent, then log in.");
       return;
     }
     showVotingPage(user);
   } else {
-    showWelcome();
+    // Signing out is expected after email registration and after an
+    // unverified email is blocked. If the visitor is already on the auth
+    // screen, leave that screen visible instead of resetting to Welcome.
+    const authScreen = document.getElementById("authScreen");
+    if (!authScreen || authScreen.style.display !== "block") {
+      showWelcome();
+    }
   }
 });
 
