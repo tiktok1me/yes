@@ -85,13 +85,8 @@
     #votingRoom .back-arrow-button{background:#f3f4f6;color:#080a12;border-color:#34344a}
     @media(max-width:600px){.back-arrow-button{width:64px;height:64px;min-width:64px;font-size:44px;bottom:12px}}
     #followUsersPanel{display:none;background:#fff;padding:18px;max-width:600px;margin:12px auto;border-radius:12px;box-shadow:0 3px 14px #00000012}
-    .video-album-button{width:100%;margin-top:10px;background:#3730a3;color:#fff}
-    .video-album-button:hover{background:#4338ca}
-    #videoAlbumDialog{max-width:760px;max-height:90vh;overflow:auto;background:#101321;color:#f3f4f6;border:1px solid #34344a}
-    #videoAlbumDialog input,#videoAlbumDialog select{background:#0e1220;color:#f3f4f6;border:1px solid #424a61}
     .album-video{padding:12px 0;border-top:1px solid #34344a}
     .album-video video,.album-video iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
-    .album-admin{padding:16px;margin-top:18px;border:1px solid #424a61;border-radius:12px;background:#171b2b}
 
 
     #adminLauncher{position:fixed;right:14px;top:14px;z-index:9998;background:#7c3aed;color:#fff;border:2px solid #fff;border-radius:999px;padding:11px 15px;box-shadow:0 4px 18px #0005;font-weight:800}
@@ -273,27 +268,7 @@
   </div>
 </dialog>
 
-<dialog id="videoAlbumDialog">
-  <div class="modal">
-    <h2 id="videoAlbumTitle">🎬 Video Album</h2>
-    <p id="videoAlbumDescription">Watch videos about this contestant.</p>
-    <div id="videoAlbumItems"><p>Loading videos…</p></div>
-    <section class="album-admin">
-      <h3 style="margin-top:0;">🔐 Admin video tools</h3>
-      <p>Only an authorized admin with the configured password can add or remove videos.</p>
-      <label for="videoAdminPassword">Admin password</label>
-      <input id="videoAdminPassword" type="password" autocomplete="current-password" placeholder="Enter admin password">
-      <label for="videoLinkInput">YouTube or TikTok video link</label>
-      <input id="videoLinkInput" type="url" placeholder="https://www.youtube.com/watch?v=...">
-      <button type="button" onclick="adminAddVideoLink()">Add video link</button>
-      <label for="videoFileInput">Or upload a video file (maximum 100 MB)</label>
-      <input id="videoFileInput" type="file" accept="video/*">
-      <button type="button" onclick="adminUploadVideo()">Upload video file</button>
-      <p id="videoAdminStatus" role="status" aria-live="polite"></p>
-    </section>
-    <div class="actions"><button type="button" class="secondary" onclick="videoAlbumDialog.close()">Close album</button></div>
-  </div>
-</dialog>
+
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
@@ -1007,7 +982,6 @@ async function loadContestants() {
       <div class="vote-progress-track" role="progressbar" aria-label="Voting progress for ${escapeHtml(c.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(100, Number(c.votes) || 0)}"><div class="vote-progress-fill" style="width:${Math.min(100, Number(c.votes) || 0)}%"></div></div>
       <br>
       <button onclick="openVote(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')">Vote</button>
-      <button class="video-album-button" onclick="openVideoAlbum(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')">🎬 Video Album</button>
     </article>
   `).join("");
 }
