@@ -252,6 +252,7 @@
     <strong>How voting works:</strong> Select a contestant, choose the number of votes,
     enter your M-Pesa number and complete the STK prompt on your phone.
   </div>
+  <div id="publicVotingSchedule" class="notice" aria-live="polite" style="margin-top:12px;"></div>
   <section id="contestants" class="grid"></section>
   <section id="transactionHistory" class="notice" aria-live="polite" style="margin-top:24px;">
     <h2 style="margin-top:0;">🧾 Transaction History</h2>
@@ -1005,6 +1006,11 @@ function adminMsg(m){const e=document.getElementById("adminActionStatus");if(e)e
 async function loadContestants() {
   const response = await fetch("/api/contestants");
   const contestants = await response.json();
+  const scheduleResponse = await fetch("/api/voting-settings");
+  const schedule = await scheduleResponse.json();
+  const scheduleBox = document.getElementById("publicVotingSchedule");
+  const formatDate = value => value ? new Date(value).toLocaleString() : "Not announced";
+  scheduleBox.textContent = "Voting opens: " + formatDate(schedule.openAt) + " · Voting closes: " + formatDate(schedule.closeAt);
   document.getElementById("contestants").innerHTML = contestants.map(c => `
     <article class="card">
       <div class="avatar" style="font-size:64px;display:flex;align-items:center;justify-content:center;min-height:130px;" aria-label="${escapeHtml(c.name)} icon">${c.photoUrl ? '<img src="'+escapeHtml(c.photoUrl)+'" alt="'+escapeHtml(c.name)+'" style="width:100%;height:150px;object-fit:cover;border-radius:12px">' : (c.icon || "🤖")}</div>
@@ -1278,7 +1284,7 @@ async function loadAdminOverview() {
     if (!response.ok) throw new Error(data.error || "Could not load admin overview.");
     const paid = data.transactions.filter(t => t.status === "PAID");
     const totalPaidVotes = paid.reduce((sum, t) => sum + Number(t.votes || 0), 0);
-    out.textContent = "Contestants: " + data.contestants.length + " · Payment records: " + data.transactions.length + " · Successful payments: " + paid.length + " · Votes in successful payment records: " + totalPaidVotes + ". This is a read-only overview; editing controls are not added yet.";
+    out.textContent = "Contestants: " + data.contestants.length + " · Payment records: " + data.transactions.length + " · Successful payments: " + paid.length + " · Votes in successful payment records: " + totalPaidVotes + ".";
   } catch (error) {
     out.textContent = error.message || "Could not load admin overview.";
   }
