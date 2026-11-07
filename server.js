@@ -328,7 +328,164 @@ app.get("/api/admin/overview", requireVideoAdmin, async (req, res) => {
   });
 });
 
+app.get("/api/voting-settings",async(req,res)=>{await loadDb();res.setHeader("Cache-Control","no-store");res.json(db.data.settings||{openAt:"",closeAt:"",showVoteTotals:true});});
 app.get("/api/contestants", async (req, res) => {
+  await loadDb();
+  const settings=db.data.settings||{};
+  res.json(db.data.contestants.map(c=>({...c,votes:settings.showVoteTotals===false?undefined:c.votes})));
+});
+app.post("/api/admin/contestants",requireVideoAdmin,photoUpload.single("photo"),async(req,res)=>{
+  await loadDb();if(db.data.contestants.length>=20)return res.status(400).json({error:"Maximum of 20 contestants reached."});
+  const name=String(req.body.name||"").trim();if(!name)return res.status(400).json({error:"Enter a contestant name."});
+  const id=db.data.contestants.reduce((m,c)=>Math.max(m,Number(c.id)||0),0)+1;
+  const c={id,name,icon:"⭐",votes:0,photoUrl:req.file?"/uploads/"+req.file.filename:""};db.data.contestants.push(c);await db.write();res.json({success:true,contestant:c});
+});
+app.patch("/api/admin/contestants/:id",requireVideoAdmin,async(req,res)=>{
+  await loadDb();const c=db.data.contestants.find(x=>Number(x.id)===Number(req.params.id));if(!c)return res.status(404).json({error:"Contestant not found."});
+  const name=String(req.body.name||"").trim();if(!name)return res.status(400).json({error:"Name cannot be empty."});c.name=name;await db.write();res.json({success:true});
+});
+app.post("/api/admin/contestants/:id/photo",requireVideoAdmin,photoUpload.single("photo"),async(req,res)=>{
+  await loadDb();const c=db.data.contestants.find(x=>Number(x.id)===Number(req.params.id));if(!c)return res.status(404).json({error:"Contestant not found."});
+  if(!req.file)return res.status(400).json({error:"Choose a picture."});c.photoUrl="/uploads/"+req.file.filename;await db.write();res.json({success:true});
+});
+app.delete("/api/admin/contestants/:id",requireVideoAdmin,async(req,res)=>{
+  await loadDb();const n=db.data.contestants.length;db.data.contestants=db.data.contestants.filter(c=>Number(c.id)!==Number(req.params.id));if(n===db.data.contestants.length)return res.status(404).json({error:"Contestant not found."});await db.write();res.json({success:true});
+});
+app.delete("/api/admin/contestants",requireVideoAdmin,async(req,res)=>{await loadDb();db.data.contestants=[];db.data.transactions=[];await db.write();res.json({success:true});});
+app.post("/api/admin/reset-votes",requireVideoAdmin,async(req,res)=>{await loadDb();db.data.contestants.forEach(c=>c.votes=0);db.data.transactions=[];await db.write();res.json({success:true});});
+app.put("/api/admin/settings",requireVideoAdmin,async(req,res)=>{
+  await loadDb();const openAt=String(req.body.openAt||""),closeAt=String(req.body.closeAt||"");
+  if(openAt&&closeAt&&new Date(closeAt)<=new Date(openAt))return res.status(400).json({error:"Closing date must be after opening date."});
+  db.data.settings={openAt,closeAt,showVoteTotals:req.body.showVoteTotals!==false};await db.write();res.json({success:true});
+});
+
+app.post("/api/stkpush", async (req, res) => {
+  try {
+    const { contestantId, phone, votes } = req.body;
+    const contestant = db.data.contestants.find(c => c.id === Number(contestantId));
+    const voteCount = Number(votes);
+
+    if (!contestant) return res.status(400).json({ error: "Invalid contestant." });
+    if (!/^2547\d{8}$/.test(String(phone))) {
+      return res.status(400).json({ error: "Use phone format 2547XXXXXXXX." });
+    }
+    if (!Number.isInteger(voteCount) || voteCount < 1 || voteCount > 100) {
+      return res.status(400).json({ error: "Votes must be a whole number from 1 to 100." });
+    }
+
+    const amount = voteCount; // KSh 1 per vote
+    const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+
+    const shortCode = process.env.MPESA_SHORTCODE;
+    const passkey = process.env.MPESA_PASSKEY;
+    const callbackUrl = process.env.MPESA_CALLBACK_URL;
+
+    if (!shortCode || !passkey || !callbackUrl) {
+      return res.status(503).json({
+        error: "M-Pesa is not configured yet. Add the sandbox credentials in environment variables."
+      });
+    }
+
+    const token = await getAccessToken();
+    const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString("base64");
+
+    const payload = {
+      BusinessShortCode: shortCode,
+      Password: password,
+      Timestamp: timestamp,
+      TransactionType: "CustomerPayBillOnline",
+      Amount: amount,
+      PartyA: phone,
+      PartyB: shortCode,
+      PhoneNumber: phone,
+      CallBackURL: callbackUrl,
+      AccountReference: `TIKTOKVOTE-${contestant.id}`,
+      TransactionDesc: `Vote for ${contestant.name}`
+    };
+
+    const response = await axios.post(
+      `${MPESA_BASE_URL}/mpesa/stkpush/v1/processrequest`,
+      payload,
+      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    );
+
+    db.data.transactions.push({
+      merchantRequestId: response.data.MerchantRequestID,
+      checkoutRequestId: response.data.CheckoutRequestID,
+      contestantId: contestant.id,
+      phoneLast4: phone.slice(-4),
+      votes: voteCount,
+      amount,
+      status: "PENDING",
+      createdAt: new Date().toISOString()
+    });
+    await db.write();
+
+    res.json({
+      success: true,
+      message: "STK Push sent. Complete the payment on your phone.",
+      checkoutRequestId: response.data.CheckoutRequestID
+    });
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    res.status(500).json({ error: "Unable to start M-Pesa payment." });
+  }
+});
+
+app.get("/api/payment/:checkoutRequestId", async (req, res) => {
+  await loadDb();
+  const tx = db.data.transactions.find(t => t.checkoutRequestId === req.params.checkoutRequestId);
+  if (!tx) return res.status(404).json({ error: "Payment not found." });
+  res.json({
+    status: tx.status,
+    votes: tx.votes,
+    resultDesc: tx.resultDesc || null,
+    receipt: tx.mpesaReceiptNumber || null
+  });
+});
+
+app.post("/api/mpesa/callback", async (req, res) => {
+  try {
+    const callback = req.body?.Body?.stkCallback;
+    const checkoutRequestId = callback?.CheckoutRequestID;
+
+    if (checkoutRequestId) {
+      const tx = db.data.transactions.find(
+        t => t.checkoutRequestId === checkoutRequestId
+      );
+
+      if (tx) {
+        const success = callback.ResultCode === 0;
+        tx.status = success ? "PAID" : "FAILED";
+        tx.resultCode = callback.ResultCode;
+        tx.resultDesc = callback.ResultDesc;
+
+        if (success && !tx.votesApplied) {
+          const contestant = db.data.contestants.find(c => c.id === tx.contestantId);
+          if (contestant) {
+            contestant.votes += tx.votes;
+            tx.votesApplied = true;
+          }
+        }
+        await db.write();
+      }
+    }
+
+    res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+  } catch (error) {
+    console.error("Callback error:", error);
+    res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+  }
+});
+
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+loadDb().then(() => {
+  app.listen(PORT, () => console.log(`tiktokchallengeme running on port ${PORT}`));
+});
+
   await loadDb();
   const settings=db.data.settings||{};
   res.json(db.data.contestants.map(c=>({...c,votes:settings.showVoteTotals===false?undefined:c.votes})));
