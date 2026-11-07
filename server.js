@@ -19,6 +19,12 @@ app.use(express.static(path.join(__dirname, "public")));
 const uploadsDir = path.join(__dirname, "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
 app.use("/uploads", express.static(uploadsDir));
+const photoUpload = multer({
+  storage: multer.diskStorage({destination:(req,file,cb)=>cb(null,uploadsDir),filename:(req,file,cb)=>cb(null,"contestant-photo-"+Date.now()+"-"+crypto.randomBytes(5).toString("hex")+path.extname(file.originalname||".jpg").toLowerCase())}),
+  limits:{fileSize:8*1024*1024,files:1},
+  fileFilter:(req,file,cb)=>file.mimetype&&file.mimetype.startsWith("image/")?cb(null,true):cb(new Error("Choose an image file."))
+});
+
 const videoUpload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadsDir),
@@ -67,22 +73,9 @@ async function loadDb() {
     db.data = { contestants: [], transactions: [] };
   }
 
-  // Demo contestant names/icons are refreshed for testing without resetting
-  // vote totals or transaction records.
-  const demoContestants = [{"id":1,"name":"ChatGPT Nova","icon":"🤖"},{"id":2,"name":"Gemini Spark","icon":"✨"},{"id":3,"name":"Claude Atlas","icon":"🧠"},{"id":4,"name":"Copilot Pulse","icon":"🚀"},{"id":5,"name":"Meta AI Muse","icon":"🌟"},{"id":6,"name":"Grok Orbit","icon":"🪐"},{"id":7,"name":"Perplexity Prism","icon":"🔎"},{"id":8,"name":"DeepSeek Wave","icon":"🌊"},{"id":9,"name":"Mistral Pixel","icon":"🎨"},{"id":10,"name":"TikTok AI Beat","icon":"🎵"}];
   if (!Array.isArray(db.data.contestants)) db.data.contestants = [];
-  for (const demo of demoContestants) {
-    const existing = db.data.contestants.find(c => Number(c.id) === demo.id);
-    if (existing) {
-      existing.name = demo.name;
-      existing.icon = demo.icon;
-      if (!Number.isFinite(Number(existing.votes))) existing.votes = 0;
-    } else {
-      db.data.contestants.push({ ...demo, votes: 0 });
-    }
-  }
-  db.data.contestants.sort((a, b) => Number(a.id) - Number(b.id));
   if (!Array.isArray(db.data.transactions)) db.data.transactions = [];
+  if (!db.data.settings) db.data.settings = { openAt: "", closeAt: "", showVoteTotals: true };
   await db.write();
 }
 
@@ -330,13 +323,39 @@ app.get("/api/admin/overview", requireVideoAdmin, async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.json({
     contestants: db.data.contestants.map(c => ({ id: c.id, name: c.name, votes: c.votes, icon: c.icon || "", photoUrl: c.photoUrl || "" })),
+    settings: db.data.settings || {openAt:"",closeAt:"",showVoteTotals:true},
     transactions: (db.data.transactions || []).map(t => ({ contestantId: t.contestantId, phoneLast4: t.phoneLast4 || "", votes: t.votes, amount: t.amount, status: t.status, createdAt: t.createdAt, receipt: t.mpesaReceiptNumber || "" }))
   });
 });
 
 app.get("/api/contestants", async (req, res) => {
   await loadDb();
-  res.json(db.data.contestants);
+  const settings=db.data.settings||{};
+  res.json(db.data.contestants.map(c=>({...c,votes:settings.showVoteTotals===false?undefined:c.votes})));
+});
+app.post("/api/admin/contestants",requireVideoAdmin,photoUpload.single("photo"),async(req,res)=>{
+  await loadDb();if(db.data.contestants.length>=20)return res.status(400).json({error:"Maximum of 20 contestants reached."});
+  const name=String(req.body.name||"").trim();if(!name)return res.status(400).json({error:"Enter a contestant name."});
+  const id=db.data.contestants.reduce((m,c)=>Math.max(m,Number(c.id)||0),0)+1;
+  const c={id,name,icon:"⭐",votes:0,photoUrl:req.file?"/uploads/"+req.file.filename:""};db.data.contestants.push(c);await db.write();res.json({success:true,contestant:c});
+});
+app.patch("/api/admin/contestants/:id",requireVideoAdmin,async(req,res)=>{
+  await loadDb();const c=db.data.contestants.find(x=>Number(x.id)===Number(req.params.id));if(!c)return res.status(404).json({error:"Contestant not found."});
+  const name=String(req.body.name||"").trim();if(!name)return res.status(400).json({error:"Name cannot be empty."});c.name=name;await db.write();res.json({success:true});
+});
+app.post("/api/admin/contestants/:id/photo",requireVideoAdmin,photoUpload.single("photo"),async(req,res)=>{
+  await loadDb();const c=db.data.contestants.find(x=>Number(x.id)===Number(req.params.id));if(!c)return res.status(404).json({error:"Contestant not found."});
+  if(!req.file)return res.status(400).json({error:"Choose a picture."});c.photoUrl="/uploads/"+req.file.filename;await db.write();res.json({success:true});
+});
+app.delete("/api/admin/contestants/:id",requireVideoAdmin,async(req,res)=>{
+  await loadDb();const n=db.data.contestants.length;db.data.contestants=db.data.contestants.filter(c=>Number(c.id)!==Number(req.params.id));if(n===db.data.contestants.length)return res.status(404).json({error:"Contestant not found."});await db.write();res.json({success:true});
+});
+app.delete("/api/admin/contestants",requireVideoAdmin,async(req,res)=>{await loadDb();db.data.contestants=[];db.data.transactions=[];await db.write();res.json({success:true});});
+app.post("/api/admin/reset-votes",requireVideoAdmin,async(req,res)=>{await loadDb();db.data.contestants.forEach(c=>c.votes=0);db.data.transactions=[];await db.write();res.json({success:true});});
+app.put("/api/admin/settings",requireVideoAdmin,async(req,res)=>{
+  await loadDb();const openAt=String(req.body.openAt||""),closeAt=String(req.body.closeAt||"");
+  if(openAt&&closeAt&&new Date(closeAt)<=new Date(openAt))return res.status(400).json({error:"Closing date must be after opening date."});
+  db.data.settings={openAt,closeAt,showVoteTotals:req.body.showVoteTotals!==false};await db.write();res.json({success:true});
 });
 
 app.post("/api/stkpush", async (req, res) => {
