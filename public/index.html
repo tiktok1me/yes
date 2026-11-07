@@ -344,7 +344,8 @@ function hidePostLoginWelcome() {
 function showWelcome() {
   hidePostLoginWelcome();
   document.getElementById("welcomeScreen").style.display = "block";
-  document.getElementById("authScreen").style.display = "none";
+  const authScreen = document.getElementById("authScreen");
+  if (authScreen) authScreen.style.display = "none";
   document.getElementById("postLoginWelcome").style.display = "none";
   document.getElementById("accountBar").style.display = "none";
   document.getElementById("memberHome").style.display = "none";
