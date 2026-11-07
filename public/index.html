@@ -111,6 +111,16 @@
     <section id="adminUnlockedPanel" style="display:none;margin-top:18px;border-top:1px solid #374151;padding-top:14px">
       <h3>Admin access confirmed</h3><p id="adminOverviewStatus">Loading overview…</p>
       <button type="button" onclick="loadAdminOverview()">Refresh overview</button>
+      <hr><h3>Contestant management (maximum 20)</h3><div id="adminContestantList"></div>
+      <h4>Add contestant</h4><input id="newContestantName" placeholder="Contestant name" maxlength="60">
+      <input id="newContestantPhoto" type="file" accept="image/*"><button type="button" onclick="adminAddContestant()">Add contestant</button>
+      <hr><h3>Voting schedule</h3><label>Opening date and time</label><input id="voteOpenAt" type="datetime-local">
+      <label>Closing date and time</label><input id="voteCloseAt" type="datetime-local">
+      <label><input id="showVoteTotals" type="checkbox" style="width:auto"> Show vote totals publicly</label>
+      <button type="button" onclick="adminSaveSettings()">Save voting schedule</button>
+      <hr><h3>Reset options</h3><button type="button" onclick="adminResetVotes()">Refresh all vote totals (keep contestants)</button>
+      <button type="button" style="background:#b91c1c" onclick="adminRemoveAllContestants()">Remove ALL contestants and vote totals</button>
+      <p id="adminActionStatus" role="status" aria-live="polite"></p>
     </section>
   </dialog>
   
@@ -970,12 +980,34 @@ async function refreshTransactionHistory() {
   renderTransactionHistory();
 }
 
+async function adminCall(url, options={}) {
+  const response=await fetch(url,{...options,headers:{...(options.headers||{}),"x-admin-password":adminPasswordForCurrentPage}});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||"Admin action failed.");return data;
+}
+async function adminRefreshContestants(){
+  const d=await adminCall("/api/admin/overview");
+  document.getElementById("adminContestantList").innerHTML=d.contestants.map(c=>`<div style="border:1px solid #475569;padding:10px;margin:10px 0;border-radius:10px"><b>#${c.id} — ${escapeHtml(c.name)}</b> (${Number(c.votes)||0} votes)
+  <input id="admName${c.id}" value="${escapeHtml(c.name)}" maxlength="60"><input id="admPhoto${c.id}" type="file" accept="image/*">
+  <button onclick="adminEditName(${c.id})">Save name</button><button onclick="adminPhoto(${c.id})">Upload/change photo</button><button style="background:#b91c1c" onclick="adminDeleteOne(${c.id})">Remove</button></div>`).join("")||"<p>No contestants. Add contestants above.</p>";
+  document.getElementById("voteOpenAt").value=d.settings.openAt||"";
+  document.getElementById("voteCloseAt").value=d.settings.closeAt||"";
+  document.getElementById("showVoteTotals").checked=d.settings.showVoteTotals!==false;
+}
+async function adminEditName(id){try{await adminCall("/api/admin/contestants/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:document.getElementById("admName"+id).value})});await adminRefreshContestants();await loadContestants();adminMsg("Name saved.");}catch(e){adminMsg(e.message);}}
+async function adminPhoto(id){const f=document.getElementById("admPhoto"+id).files[0];if(!f)return adminMsg("Choose a picture first.");const form=new FormData();form.append("photo",f);try{await adminCall("/api/admin/contestants/"+id+"/photo",{method:"POST",body:form});await adminRefreshContestants();await loadContestants();adminMsg("Picture uploaded.");}catch(e){adminMsg(e.message);}}
+async function adminAddContestant(){const form=new FormData();form.append("name",document.getElementById("newContestantName").value);const f=document.getElementById("newContestantPhoto").files[0];if(f)form.append("photo",f);try{await adminCall("/api/admin/contestants",{method:"POST",body:form});document.getElementById("newContestantName").value="";document.getElementById("newContestantPhoto").value="";await adminRefreshContestants();await loadContestants();adminMsg("Contestant added.");}catch(e){adminMsg(e.message);}}
+async function adminDeleteOne(id){if(!confirm("Remove this contestant?"))return;try{await adminCall("/api/admin/contestants/"+id,{method:"DELETE"});await adminRefreshContestants();await loadContestants();adminMsg("Contestant removed.");}catch(e){adminMsg(e.message);}}
+async function adminResetVotes(){if(!confirm("Reset all vote totals to zero and clear transaction history?"))return;try{await adminCall("/api/admin/reset-votes",{method:"POST"});await adminRefreshContestants();await loadContestants();adminMsg("Voting totals reset.");}catch(e){adminMsg(e.message);}}
+async function adminRemoveAllContestants(){if(!confirm("Remove ALL contestants and clear all transaction records?"))return;if(!confirm("Are you absolutely sure?"))return;try{await adminCall("/api/admin/contestants",{method:"DELETE"});await adminRefreshContestants();await loadContestants();adminMsg("All contestants removed. Add new ones when ready.");}catch(e){adminMsg(e.message);}}
+async function adminSaveSettings(){try{await adminCall("/api/admin/settings",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({openAt:document.getElementById("voteOpenAt").value,closeAt:document.getElementById("voteCloseAt").value,showVoteTotals:document.getElementById("showVoteTotals").checked})});adminMsg("Schedule and vote visibility saved.");}catch(e){adminMsg(e.message);}}
+function adminMsg(m){const e=document.getElementById("adminActionStatus");if(e)e.textContent=m;}
+
 async function loadContestants() {
   const response = await fetch("/api/contestants");
   const contestants = await response.json();
   document.getElementById("contestants").innerHTML = contestants.map(c => `
     <article class="card">
-      <div class="avatar" style="font-size:64px;display:flex;align-items:center;justify-content:center;min-height:130px;" aria-label="${escapeHtml(c.name)} icon">${c.icon || "🤖"}</div>
+      <div class="avatar" style="font-size:64px;display:flex;align-items:center;justify-content:center;min-height:130px;" aria-label="${escapeHtml(c.name)} icon">${c.photoUrl ? '<img src="'+escapeHtml(c.photoUrl)+'" alt="'+escapeHtml(c.name)+'" style="width:100%;height:150px;object-fit:cover;border-radius:12px">' : (c.icon || "🤖")}</div>
       <h3>${escapeHtml(c.name)}</h3>
       <div class="votes">${Number(c.votes) || 0} verified votes</div>
       <div class="vote-progress-label"><span>Voting progress (toward 100 votes)</span><strong>${Math.min(100, Number(c.votes) || 0)}%</strong></div>
@@ -1232,6 +1264,7 @@ async function submitAdminLogin(event) {
     status.textContent = "Password accepted.";
     document.getElementById("adminUnlockedPanel").style.display = "block";
     await loadAdminOverview();
+    await adminRefreshContestants();
   } catch (error) {
     status.textContent = error.message || "Could not verify admin password.";
   }
