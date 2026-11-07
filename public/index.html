@@ -132,46 +132,7 @@
   <p class="welcome-copy">Cheer for your favourite contestant. Every vote brings them one step closer to the spotlight!</p>
   <div class="prize-line">✨ Big dreams. Big talent. A chance to shine. ✨</div>
   <p style="margin:0 0 20px;color:#bfc1d8;font-size:13px;">Join the challenge and be part of the excitement.</p>
-  <button class="welcome-next" onclick="showSignIn()">Let's Get Started&nbsp; →</button>
-</section>
-
-<section id="authScreen" style="display:none;max-width:500px;margin:40px auto;padding:25px 20px;text-align:center;background:white;border-radius:18px;box-shadow:0 4px 20px #0001;">
-  <p id="authMessage" role="status" aria-live="polite" style="margin:12px 0;color:#b91c1c;overflow-wrap:anywhere;"></p>
-  <div id="authChoicePanel">
-    <h2 id="authModeTitle">Register your account</h2>
-    <p id="authModeDescription">Register first, then log in after verification.</p>
-    <button class="auth-option" onclick="setAuthMode('register')">📝 Register</button>
-    <button class="auth-option" onclick="setAuthMode('login')">🔐 Log in</button>
-    <div class="auth-divider">CHOOSE A METHOD</div>
-    <button class="auth-option google-option" onclick="chooseAuthMethod('google')"><span class="auth-icon">G</span><span id="googleChoiceLabel">Register with Google</span></button>
-    <button class="auth-option phone-option" onclick="chooseAuthMethod('phone')"><span class="auth-icon">📱</span><span id="phoneChoiceLabel">Register with Phone</span></button>
-    <button class="auth-option email-option" onclick="chooseAuthMethod('email')"><span class="auth-icon">✉</span><span id="emailChoiceLabel">Register with Email</span></button>
-    <button class="auth-option" onclick="beginTikTokSignIn()" style="background:#111827;color:#fff;border-color:#111827;"><span class="auth-icon">♪</span><span>Continue with TikTok</span></button>
-    <button type="button" class="back-arrow-button" onclick="showWelcome()" aria-label="Back to welcome" title="Back">←</button>
-  </div>
-  <div id="googleAuthPanel" class="method-panel" style="display:none;">
-    <h2 id="googlePanelTitle">Register with Google</h2><p>Use your Google account to continue.</p>
-    <button class="auth-option google-option" onclick="continueWithGoogle()"><span class="auth-icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.74 7.18l7.7 5.98c4.5-4.16 7.08-10.3 7.08-17.63z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.82l-7.7-5.98c-2.13 1.43-4.87 2.28-8.2 2.28-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span><span>Sign in with Google</span></button>
-    <button type="button" class="back-arrow-button" onclick="showAuthChoices()" aria-label="Back to methods" title="Back">←</button>
-  </div>
-  <div id="emailAuthPanel" class="method-panel" style="display:none;text-align:left;">
-    <h2 id="emailPanelTitle" style="text-align:center;">Register with Email</h2><p id="emailPanelDescription" style="text-align:center;">Enter your name, email and password to register.</p>
-    <label for="authFullName">Full name</label><input id="authFullName" type="text" autocomplete="name" placeholder="Your full name">
-    <label for="authEmail">Email address</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com">
-    <label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters">
-    <div class="email-actions"><button id="emailSubmitButton" class="auth-option email-option" onclick="submitEmailAuth()">Register</button></div>
-    <button type="button" class="back-arrow-button" onclick="showAuthChoices()" aria-label="Back to methods" title="Back">←</button>
-  </div>
-  <div id="phoneAuthPanel" class="method-panel" style="display:none;text-align:left;">
-    <h2 id="phonePanelTitle" style="text-align:center;">Register with Phone</h2><p id="phonePanelDescription" style="text-align:center;">Enter your name and phone number to receive an SMS verification code.</p>
-    <label id="phoneNameLabel" for="authPhoneName">Full name</label><input id="authPhoneName" type="text" autocomplete="name" placeholder="Your full name">
-    <label for="authPhone">Phone number</label><input id="authPhone" type="tel" autocomplete="tel" placeholder="+2547XXXXXXXX">
-    <div id="recaptcha-container" style="margin:15px 0;"></div>
-    <button class="auth-option phone-option" onclick="sendPhoneCode()"><span class="auth-icon" aria-hidden="true">📱</span><span>Send verification code</span></button>
-    <label for="smsCode">SMS verification code</label><input id="smsCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter code">
-    <button class="auth-option phone-option" onclick="verifyPhoneCode()" style="margin-top:12px;"><span class="auth-icon" aria-hidden="true">✓</span><span id="verifyPhoneLabel">Verify and register</span></button>
-    <button type="button" class="back-arrow-button" onclick="showAuthChoices()" aria-label="Back to methods" title="Back">←</button>
-  </div>
+  <button class="welcome-next" onclick="openVotingRoom()">Let's Get Started&nbsp; →</button>
 </section>
 
 <section id="postLoginWelcome" style="display:none;max-width:760px;margin:28px auto;padding:28px 18px;text-align:center;background:#fff;border-radius:22px;box-shadow:0 10px 35px rgba(15,23,42,.12);">
@@ -503,8 +464,10 @@ function showVotingPage(user) {
 }
 
 function openVotingRoom() {
-  // Show the voting-room wrapper first; otherwise its hidden parent keeps
-  // the header, instructions, and all ten contestants invisible.
+  // Open voting directly from the welcome screen without requiring registration or login.
+  document.getElementById("welcomeScreen").style.display = "none";
+  document.getElementById("authScreen")?.style && (document.getElementById("authScreen").style.display = "none");
+  document.getElementById("postLoginWelcome").style.display = "none";
   document.getElementById("memberHome").style.display = "none";
   document.getElementById("votingRoom").style.display = "block";
   document.querySelector("#votingRoom header").style.display = "block";
@@ -930,20 +893,10 @@ async function verifyPhoneCode() {
   }
 }
 
-onAuthStateChanged(auth, user => {
-  if (user) {
-    // Email/password members may enter with their original credentials
-    // without being forced through an email verification link on each login.
-    showVotingPage(user);
-  } else {
-    // Signing out is expected after email registration and after an
-    // unverified email is blocked. If the visitor is already on the auth
-    // screen, leave that screen visible instead of resetting to Welcome.
-    const authScreen = document.getElementById("authScreen");
-    if (!authScreen || authScreen.style.display !== "block") {
-      showWelcome();
-    }
-  }
+onAuthStateChanged(auth, () => {
+  // Registration and login are removed. Everyone starts at Welcome and can open voting directly.
+  showWelcome();
+
 });
 
 window.showWelcome = showWelcome;
@@ -1265,10 +1218,12 @@ function goBackFromMemberRoom() {
 function goBackFromVotingRoom() {
   const room = document.getElementById("votingRoom");
   if (room) room.style.display = "none";
+  const welcome = document.getElementById("welcomeScreen");
+  if (welcome) welcome.style.display = "block";
   const member = document.getElementById("memberHome");
-  if (member) member.style.display = "block";
+  if (member) member.style.display = "none";
   const accountBar = document.getElementById("accountBar");
-  if (accountBar) accountBar.style.display = "flex";
+  if (accountBar) accountBar.style.display = "none";
   const settings = document.getElementById("settingsPanel");
   if (settings) settings.style.display = "none";
   const follow = document.getElementById("followUsersPanel");
