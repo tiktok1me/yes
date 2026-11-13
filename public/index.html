@@ -8,6 +8,11 @@
     *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
     /* Dark theme applies only inside the voting room */
     #votingRoom{min-height:100vh;background:#080a12;color:#f3f4f6;padding-bottom:32px}
+    #votingRoom[style*="display: block"],#votingRoom[style*="display:block"]{display:block!important;min-height:100vh;background:#080a12;color:#f3f4f6}
+    #votingRoom #votingIntro,#votingRoom #votingArea{width:100%;min-height:100vh;background:#080a12;color:#f3f4f6}
+    #votingRoom #votingIntro header,#votingRoom #votingIntro main,#votingRoom #votingArea header,#votingRoom #votingArea main{display:block!important;visibility:visible!important;opacity:1!important}
+    #votingRoom #votingIntro main,#votingRoom #votingArea main{min-height:55vh;padding-bottom:110px}
+    #votingRoom #votingIntro .notice{display:block!important;visibility:visible!important;color:#f3f4f6}
     #votingRoom header{background:linear-gradient(120deg,#08080d,#17172b 60%,#30101c);color:#fff;border-bottom:1px solid #34344a}
     #votingRoom main{color:#f3f4f6}
     #votingRoom .notice{background:#151827;color:#f3f4f6;border:1px solid #292e42;box-shadow:0 8px 24px #0005}
@@ -466,10 +471,10 @@ function openVotingRoom() {
   show("votingRoom", "block");
   show("votingIntro", "block");
   show("votingArea", "none");
-  document.querySelector("#votingIntro header").style.display = "block";
-  document.querySelector("#votingIntro main").style.display = "block";
-  document.querySelector("#votingArea header").style.display = "block";
-  document.querySelector("#votingArea main").style.display = "block";
+  ["#votingIntro header","#votingIntro main","#votingArea header","#votingArea main"].forEach(selector => {
+    const el=document.querySelector(selector);
+    if(el){el.style.setProperty("display","block","important");el.style.setProperty("visibility","visible","important");el.style.opacity="1";}
+  });
   const confirm = document.getElementById("votingInstructionsConfirm");
   if (confirm) confirm.checked = false;
   updateVotingContinueButton();
