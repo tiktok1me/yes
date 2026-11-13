@@ -463,26 +463,30 @@ function showVotingPage(user) {
 }
 
 function openVotingRoom() {
-  document.getElementById("welcomeScreen").style.display = "none";
-  document.getElementById("authScreen")?.style && (document.getElementById("authScreen").style.display = "none");
-  document.getElementById("postLoginWelcome").style.display = "none";
-  document.getElementById("memberHome").style.display = "none";
-  document.getElementById("votingRoom").style.display = "block";
-  document.getElementById("votingIntro").style.display = "block";
-  document.getElementById("votingArea").style.display = "none";
-  document.getElementById("votingInstructionsConfirm").checked = false;
+  const show = (id, display) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = display;
+  };
+  show("welcomeScreen", "none");
+  show("authScreen", "none");
+  show("postLoginWelcome", "none");
+  show("memberHome", "none");
+  show("votingRoom", "block");
+  show("votingIntro", "block");
+  show("votingArea", "none");
+  const confirm = document.getElementById("votingInstructionsConfirm");
+  if (confirm) confirm.checked = false;
   updateVotingContinueButton();
-  document.getElementById("settingsPanel").style.display = "none";
-  document.getElementById("followUsersPanel").style.display = "none";
-  document.getElementById("appChatNotice").style.display = "none";
-  document.getElementById("aiChatNotice").style.display = "none";
+  ["settingsPanel","followUsersPanel","appChatNotice","aiChatNotice"].forEach(id => show(id,"none"));
+  loadVotingScheduleForInfoPage();
   loadContestants().catch(error => {
     const list = document.getElementById("contestants");
     if (list) list.innerHTML = '<div class="notice">We could not load the contestants. Please refresh the page and try again.</div>';
     console.error("Could not load contestants:", error);
   });
-  window.scrollTo({top: 0, behavior: "smooth"});
+  window.scrollTo({top:0,behavior:"smooth"});
 }
+
 function updateVotingContinueButton() {
   const checkbox=document.getElementById("votingInstructionsConfirm");
   const button=document.getElementById("continueToVoteButton");
@@ -503,15 +507,7 @@ function backToVotingInstructions() {
   document.getElementById("votingIntro").style.display="block";
   window.scrollTo({top:0,behavior:"smooth"});
 }
-function updateVotingContinueButton() {
-  const checked = document.getElementById("votingRulesConfirm")?.checked === true;
-  const button = document.getElementById("continueToVoteButton");
-  if (!button) return;
-  button.disabled = !checked;
-  button.style.background = checked ? "linear-gradient(100deg,#fe2c55,#a927e8)" : "#64748b";
-  button.style.opacity = checked ? "1" : ".65";
-  button.style.cursor = checked ? "pointer" : "not-allowed";
-}
+
 async function loadVotingScheduleForInfoPage() {
   const box = document.getElementById("publicVotingSchedule");
   if (!box) return;
