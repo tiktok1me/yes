@@ -242,32 +242,30 @@
 
 
 <div id="votingRoom" style="display:none;">
-  <section id="votingInfoPage" style="max-width:760px;margin:24px auto;padding:24px 18px;">
-    <header style="position:relative;border-radius:20px;background:linear-gradient(120deg,#08080d,#17172b 60%,#30101c);color:#fff;border:1px solid #34344a;">
-      <button type="button" class="back-arrow-button" onclick="goBackFromVotingRoom()" aria-label="Back" title="Back">←</button>
+  <section id="votingIntro">
+    <header>
+      <button type="button" class="back-arrow-button" onclick="goBackFromVotingRoom()" aria-label="Back to welcome" title="Back">←</button>
       <h1>tiktokchallengeme</h1>
       <p>Vote for your favourite contestant — KSh 1 per vote</p>
     </header>
-    <main style="display:block;margin:20px auto 0;padding:0;">
-      <div class="notice">
-        <strong>How voting works:</strong> Select a contestant, choose the number of votes,
-        enter your M-Pesa number and complete the STK prompt on your phone.
-      </div>
+    <main>
+      <div class="notice"><strong>How voting works:</strong> Select a contestant, choose the number of votes, enter your M-Pesa number and complete the STK prompt on your phone.</div>
       <div id="publicVotingSchedule" class="notice" aria-live="polite" style="margin-top:12px;"></div>
-      <label style="display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid #64748b;border-radius:14px;background:#151827;color:#f3f4f6;line-height:1.5;">
-        <input id="votingRulesConfirm" type="checkbox" onchange="updateVotingContinueButton()" style="width:22px;height:22px;flex:0 0 22px;margin:0;">
-        <span>I have read and understood how voting works, the KSh 1 per vote charge, and the voting dates above. / Nimesoma na kuelewa jinsi upigaji kura unavyofanya kazi.</span>
-      </label>
-      <button id="continueToVoteButton" type="button" disabled onclick="enterVotingArea()" style="width:100%;margin-top:16px;padding:17px;border-radius:14px;background:#64748b;color:white;font-size:20px;font-weight:800;opacity:.65;cursor:not-allowed;">🗳️ CONFIRM & VOTE</button>
+      <div class="notice" style="border:1px solid #fe2c55;">
+        <label style="display:flex;align-items:flex-start;gap:10px;line-height:1.5;font-weight:600;margin:0;">
+          <input id="votingInstructionsConfirm" type="checkbox" style="width:22px;height:22px;flex:0 0 22px;margin:2px 0 0;accent-color:#fe2c55;">
+          <span>I have read and understood how voting works. I understand that each vote costs KSh 1 and votes count only after successful M-Pesa payment confirmation.</span>
+        </label>
+        <button id="continueToVoteButton" type="button" disabled onclick="confirmVotingInstructions()" style="width:100%;margin-top:18px;padding:16px;background:linear-gradient(100deg,#fe2c55,#8b2be2);font-size:18px;opacity:.55;cursor:not-allowed;">🗳️ CONTINUE TO VOTE</button>
+      </div>
     </main>
   </section>
   <section id="votingArea" style="display:none;">
-    <header style="position:relative;">
-      <button type="button" class="back-arrow-button" onclick="backToVotingInfo()" aria-label="Back to voting information" title="Back">←</button>
-      <h1>Choose Your Contestant</h1>
-      <p>Select who you want to support</p>
+    <header>
+      <button type="button" class="back-arrow-button" onclick="backToVotingInstructions()" aria-label="Back to instructions" title="Back">←</button>
+      <h1>Choose Your Contestant</h1><p>Select who you want to support</p>
     </header>
-    <main style="display:block;">
+    <main>
       <section id="contestants" class="grid"></section>
       <section id="transactionHistory" class="notice" aria-live="polite" style="margin-top:24px;">
         <h2 style="margin-top:0;">🧾 Transaction History</h2>
@@ -470,16 +468,40 @@ function openVotingRoom() {
   document.getElementById("postLoginWelcome").style.display = "none";
   document.getElementById("memberHome").style.display = "none";
   document.getElementById("votingRoom").style.display = "block";
-  document.getElementById("votingInfoPage").style.display = "block";
+  document.getElementById("votingIntro").style.display = "block";
   document.getElementById("votingArea").style.display = "none";
-  document.getElementById("votingRulesConfirm").checked = false;
+  document.getElementById("votingInstructionsConfirm").checked = false;
   updateVotingContinueButton();
   document.getElementById("settingsPanel").style.display = "none";
   document.getElementById("followUsersPanel").style.display = "none";
   document.getElementById("appChatNotice").style.display = "none";
   document.getElementById("aiChatNotice").style.display = "none";
-  loadVotingScheduleForInfoPage();
+  loadContestants().catch(error => {
+    const list = document.getElementById("contestants");
+    if (list) list.innerHTML = '<div class="notice">We could not load the contestants. Please refresh the page and try again.</div>';
+    console.error("Could not load contestants:", error);
+  });
   window.scrollTo({top: 0, behavior: "smooth"});
+}
+function updateVotingContinueButton() {
+  const checkbox=document.getElementById("votingInstructionsConfirm");
+  const button=document.getElementById("continueToVoteButton");
+  if(!checkbox||!button)return;
+  button.disabled=!checkbox.checked;
+  button.style.opacity=checkbox.checked?"1":".55";
+  button.style.cursor=checkbox.checked?"pointer":"not-allowed";
+}
+function confirmVotingInstructions() {
+  if(!document.getElementById("votingInstructionsConfirm").checked)return;
+  document.getElementById("votingIntro").style.display="none";
+  document.getElementById("votingArea").style.display="block";
+  loadContestants();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function backToVotingInstructions() {
+  document.getElementById("votingArea").style.display="none";
+  document.getElementById("votingIntro").style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 function updateVotingContinueButton() {
   const checked = document.getElementById("votingRulesConfirm")?.checked === true;
@@ -1264,6 +1286,7 @@ function escapeHtml(value) {
   }[char]));
 }
 
+document.getElementById("votingInstructionsConfirm")?.addEventListener("change", updateVotingContinueButton);
 loadContestants();
 renderTransactionHistory();
 window.refreshTransactionHistory = refreshTransactionHistory;
