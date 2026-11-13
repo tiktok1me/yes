@@ -352,8 +352,6 @@ function showWelcome() {
   document.getElementById("settingsPanel").style.display = "none";
   document.getElementById("followUsersPanel").style.display = "none";
   document.getElementById("votingRoom").style.display = "none";
-  document.querySelector("header").style.display = "none";
-  document.querySelector("main").style.display = "none";
 }
 
 function showSignIn(mode = "register") {
@@ -363,8 +361,6 @@ function showSignIn(mode = "register") {
   document.getElementById("authScreen").style.display = "block";
   document.getElementById("accountBar").style.display = "none";
   document.getElementById("votingRoom").style.display = "none";
-  document.querySelector("header").style.display = "none";
-  document.querySelector("main").style.display = "none";
   setAuthMode(mode);
 }
 
@@ -378,8 +374,6 @@ function showPostLoginWelcome(user) {
   document.getElementById("appChatNotice").style.display = "none";
   document.getElementById("aiChatNotice").style.display = "none";
   document.getElementById("votingRoom").style.display = "none";
-  document.querySelector("header").style.display = "none";
-  document.querySelector("main").style.display = "none";
   document.getElementById("postWelcomeName").textContent =
     "Welcome, " + (user.displayName || user.email || user.phoneNumber || "member") + "!";
   document.getElementById("postLoginWelcome").style.display = "block";
@@ -449,8 +443,6 @@ function showVotingPage(user) {
   renderSocialConnections();
   document.getElementById("settingsPanel").style.display = "none";
   document.getElementById("followUsersPanel").style.display = "none";
-  document.querySelector("header").style.display = "none";
-  document.querySelector("main").style.display = "none";
   const hint = document.getElementById("homeToolsHint");
   if (hint) {
     hint.textContent = "Welcome, " + (user.displayName || user.email || user.phoneNumber || "member") + "! Your voting room is separate.";
@@ -474,6 +466,10 @@ function openVotingRoom() {
   show("votingRoom", "block");
   show("votingIntro", "block");
   show("votingArea", "none");
+  document.querySelector("#votingIntro header").style.display = "block";
+  document.querySelector("#votingIntro main").style.display = "block";
+  document.querySelector("#votingArea header").style.display = "block";
+  document.querySelector("#votingArea main").style.display = "block";
   const confirm = document.getElementById("votingInstructionsConfirm");
   if (confirm) confirm.checked = false;
   updateVotingContinueButton();
@@ -499,6 +495,8 @@ function confirmVotingInstructions() {
   if(!document.getElementById("votingInstructionsConfirm").checked)return;
   document.getElementById("votingIntro").style.display="none";
   document.getElementById("votingArea").style.display="block";
+  document.querySelector("#votingArea header").style.display="block";
+  document.querySelector("#votingArea main").style.display="block";
   loadContestants();
   window.scrollTo({top:0,behavior:"smooth"});
 }
